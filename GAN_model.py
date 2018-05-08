@@ -5,6 +5,7 @@ import torch.nn as nn
 class EncoderBlock(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size=4, stride=2, padding=1, dilation=1, groups=1, bias=False, do_batch_norm=True): # bias default is True in Conv2d
         super(EncoderBlock, self).__init__()
+
         self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding, dilation, groups, bias)
         self.bn = nn.BatchNorm2d(out_channels)
         self.leakyRelu = nn.LeakyReLU(0.2)
@@ -17,11 +18,11 @@ class EncoderBlock(nn.Module):
        x = self.leakyRelu(x)
        return x
 
-
 class DecoderBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size=4, stride=2, padding=1, dilation=1, groups=1, bias=False, do_batch_norm=True, dropout_prob=0.0):
+    def __init__(self, in_channels, out_channels, kernel_size=4, stride=2, padding=1, bias=False, do_batch_norm=True, dropout_prob=0.0):
         super(DecoderBlock, self).__init__()
-        self.convT = nn.ConvTranspose2d(in_channels, out_channels, kernel_size, stride, padding, dilation, groups, bias)
+
+        self.convT = nn.ConvTranspose2d(in_channels, out_channels, kernel_size, stride, padding, bias)
         self.bn = nn.BatchNorm2d(out_channels)
         self.relu = nn.ReLU()
         self.dropout_prob = dropout_prob
@@ -50,7 +51,8 @@ class Generator(nn.Module):
         self.encoder5 = EncoderBlock(512, 512)
         self.encoder6 = EncoderBlock(512, 512)
         self.encoder7 = EncoderBlock(512, 512)
-        self.encoder8 = EncoderBlock(512, 512)
+        self.encoder8 = EncoderBlock(512, 512, do_batch_norm=False)
+
         # 8-step UNet decoder
         self.decoder1 = DecoderBlock(512, 512, dropout_prob=0.5)
         self.decoder2 = DecoderBlock(1024, 512, dropout_prob=0.5)
@@ -63,6 +65,7 @@ class Generator(nn.Module):
 
 
     def forward(self, x):
+        # 8-step encoder
         encode1 = self.encoder1(x)
         encode2 = self.encoder2(encode1)
         encode3 = self.encoder3(encode2)
@@ -72,6 +75,7 @@ class Generator(nn.Module):
         encode7 = self.encoder7(encode6)
         encode8 = self.encoder8(encode7)
 
+        # 8-step UNet decoder
         decode1 = torch.cat([self.decoder1(encode8), encode7],1)
         decode2 = torch.cat([self.decoder2(decode1), encode6],1)
         decode3 = torch.cat([self.decoder3(decode2), encode5],1)
@@ -86,20 +90,23 @@ class Generator(nn.Module):
 
 class Discriminator(nn.Module):
     def __init__(self, in_channels=3, out_channels=1):
-        super(Discrimintor, self).__init__()
+        super(Discriminator, self).__init__()
+
+        self.out_channels = out_channels
 
         # 70x70 discriminator
-        self.disc1 = EncoderBlock(in_channels, 64, do_batch_norm=False)
+        self.disc1 = EncoderBlock(in_channels * 2, 64, do_batch_norm=False)
         self.disc2 = EncoderBlock(64, 128)
         self.disc3 = EncoderBlock(128, 256)
-        self.disc4 = EncoderBlock(256, 512)
+        self.disc4 = EncoderBlock(256, 512, stride=1)
+
 
     def forward(self, x, ref):
-        d1 = self.disc1(torch.cat([x, ref]))
+        d1 = self.disc1(torch.cat([x, ref],1))
         d2 = self.disc2(d1)
         d3 = self.disc3(d2)
         d4 = self.disc4(d3)
-        final = nn.Conv2d(in_channels = 512, out_channels = 512, kernel_size=1, stride=2, padding = 1)(d4)
+        final = nn.Conv2d(in_channels = 512, out_channels = self.out_channels, kernel_size=4, stride=1, padding = 1)(d4)
         final = nn.Sigmoid()(final)
         return final
 
