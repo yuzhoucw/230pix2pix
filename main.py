@@ -10,7 +10,7 @@ import numpy as np
 
 import torch
 import dataloader
-from gan_model import CGANModel
+from gan_model import GANModel
 
 parser = argparse.ArgumentParser()
 # Model
@@ -94,7 +94,7 @@ if __name__ == "__main__":
     else:
         viz = None
 
-    model = CGANModel(args)
+    model = GANModel(args)
 
     # use pretrain
     start_epoch = 1
