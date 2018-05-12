@@ -99,6 +99,7 @@ class Discriminator(nn.Module):
         self.disc2 = EncoderBlock(64, 128)
         self.disc3 = EncoderBlock(128, 256)
         self.disc4 = EncoderBlock(256, 512, stride=1)
+        self.conv = nn.Conv2d(in_channels = 512, out_channels = self.out_channels, kernel_size=4, stride=1, padding = 1)
 
 
     def forward(self, x, ref):
@@ -106,7 +107,7 @@ class Discriminator(nn.Module):
         d2 = self.disc2(d1)
         d3 = self.disc3(d2)
         d4 = self.disc4(d3)
-        final = nn.Conv2d(in_channels = 512, out_channels = self.out_channels, kernel_size=4, stride=1, padding = 1)(d4)
+        final = self.conv(d4)
         final = nn.Sigmoid()(final)
         return final
 

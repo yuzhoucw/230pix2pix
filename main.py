@@ -31,7 +31,7 @@ parser.add_argument('--dropout', default=0, type=float)
 parser.add_argument('--n_epoch', default=10, type=int)
 parser.add_argument('--finetune', default=False, type=bool)
 parser.add_argument('--beta1', default=0.5, type=float, help='momentum term of adam')
-parser.add_argument('--lambd', default=10.0, type=float, help='weight for cycle loss (A -> B -> A)')
+parser.add_argument('--lambd', default=100.0, type=float, help='weight for L1 loss')
 # Files
 parser.add_argument('--out_dir', default='./checkpoints', type=str)
 parser.add_argument('--train_A_dir', default='./datasets/maps/trainA', type=str)
