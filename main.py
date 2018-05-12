@@ -23,6 +23,7 @@ parser.add_argument('--pretrain_path', default='', type=str)
 parser.add_argument('--print_every_train', default=100, type=int)
 parser.add_argument('--print_every_val', default=200, type=int)
 parser.add_argument('--save_every_epoch', default=20, type=int)
+parser.add_argument('--eval_n', default=100, type=int, help='number of examples from val set to evaluate on each epoch')
 # Optimization
 parser.add_argument('--lr', default=0.0002, type=float)
 parser.add_argument('--wd', default=0, type=float)
@@ -118,7 +119,8 @@ if __name__ == "__main__":
         train_vis_iter = 0
         eval_vis_iter = 0
         total_train_iter = math.ceil(len(train_loader) / args.batch_size)
-        total_val_iter = math.ceil(len(val_loader) / args.batch_size)
+        eval_n = min(args.eval_n, len(val_loader))
+        total_val_iter = math.ceil(eval_n / args.batch_size)
         for epoch in range(start_epoch, start_epoch + args.n_epoch):
             print("\n==== Epoch {:d} ====".format(epoch))
 
@@ -155,9 +157,14 @@ if __name__ == "__main__":
                 train_vis_iter += 1
 
             # eval
-            print("\nEvaluating on val set...")
+            if eval_n < 1:
+                continue
+            print("\nEvaluating %d examples on val set..." % eval_n)
             total_val_loss = {}
             for i, images in enumerate(val_loader):
+                if i >= args.eval_n:
+                    i -= 1
+                    break
 
                 loss = model.eval(images)
 
@@ -166,9 +173,12 @@ if __name__ == "__main__":
                 for k, v in loss.items():
                     if stats['val_loss'].get(k) is None:
                         stats['val_loss'][k] = []
+                    if total_val_loss.get(k) is None:
+                        total_val_loss[k] = 0
                     # convert Tensor to float
                     v = round(float(v), 4)
                     stats['val_loss'][k].append(v)
+                    total_val_loss[k] += v
                     loss[k] = v
                     s += "%s %f   " % (k, v)
 
@@ -194,6 +204,12 @@ if __name__ == "__main__":
                     viz.line(X=np.asarray([eval_vis_iter]), Y=np.asarray([loss['D_B']]), name='D_B', win=win_eval_D)
                     viz.line(X=np.asarray([eval_vis_iter]), Y=np.asarray([loss['D']]), name='D', win=win_eval_D)
                 eval_vis_iter += 1
+
+            # calculate avg val loss
+            s = ""
+            for k, v in total_val_loss.items():
+                s += "%s %f   " % (k, v/(i+1))
+            print("Average val loss    %s" % s)
 
             # save stats
             log_file = file_format + '_train.json'
