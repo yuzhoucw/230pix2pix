@@ -42,6 +42,11 @@ class GANDataset(Dataset):
         if self.transform is not None:
             imageB = self.transform(imageB)
 
+        # convert to GPU tensor
+        if self.device is not None:
+            imageA = imageA.to(self.device)
+            imageB = imageB.to(self.device)
+
         return imageA, imageB
 
     # returns the number of examples we read
@@ -51,13 +56,13 @@ class GANDataset(Dataset):
 
 
 ## return - DataLoader
-def get_dataloader(image_pathA, image_pathB, batch_size, image_size=(256, 256), unaligned=False):
+def get_dataloader(image_pathA, image_pathB, batch_size, resize, crop, unaligned=False, device=None):
     
     transform = transforms.Compose([
         # resize PIL image to given size
-        transforms.Resize(image_size),
+        transforms.Resize(resize, Image.BICUBIC),
         # crop image at randomn location
-        transforms.RandomCrop(image_size),
+        transforms.RandomCrop(crop),
         # flip images randomly
         transforms.RandomHorizontalFlip(),
         # convert image input into torch tensor
@@ -65,7 +70,7 @@ def get_dataloader(image_pathA, image_pathB, batch_size, image_size=(256, 256), 
         # normalize image with mean and standard deviation
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
     
-    batch_dataset = GANDataset(image_pathA, image_pathB, transform, unaligned)
+    batch_dataset = GANDataset(image_pathA, image_pathB, transform, unaligned, device)
 
     return DataLoader(dataset=batch_dataset, batch_size=batch_size, shuffle=True)
 
