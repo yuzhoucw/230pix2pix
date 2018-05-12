@@ -55,7 +55,7 @@ class GANModel:
         # GAN loss of G
         loss_G_gan = self.gan_loss(self.D(gen, x), 1)
         # L1 loss of G
-        loss_G_L1 = self.L1_loss_fn(gen, y)
+        loss_G_L1 = self.L1_loss_fn(gen, y) * self.lambd
         # Combine
         loss_G = loss_G_gan + loss_G_L1
 
