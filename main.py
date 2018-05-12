@@ -50,18 +50,26 @@ parser.add_argument('--port', default=8097, type=int)
 if __name__ == "__main__":
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    print("Using {}...\n".format(device))
-
     args = parser.parse_args()
-    for k, v in vars(args).items():
-        print("%s = %s" % (k, v))
 
     # output files
     if not os.path.exists(args.out_dir):
         os.mkdir(args.out_dir)
-    file_format = os.path.join(args.out_dir, '{}_lr{}_wd{}_bs{:d}_ep{:d}'
-                               .format(time.strftime("%m%d%H%M%S"), args.lr, args.wd, args.batch_size, args.n_epoch))
-    print("\nSave model and stats file format = %s" % (file_format))
+    out_dir = os.path.join(args.out_dir, time.strftime("%m%d%H%M%S"))
+    os.mkdir(out_dir)
+    out_dir_img = os.path.join(out_dir, "images")
+    os.mkdir(out_dir_img)
+    log_file = os.path.join(out_dir, "train.json")
+    config_file = os.path.join(out_dir, "config.txt")
+
+    s = "Using %s\n\n" % device
+    for k, v in vars(args).items():
+        s += "%s = %s\n" % (k, v)
+    print(s)
+    # save configs to config file
+    with open(config_file, "w") as f:
+        f.write(s)
+    print("\nSave model and stats to directory %s" % (out_dir))
 
     # load data
     if args.mode == "train":
@@ -181,11 +189,6 @@ if __name__ == "__main__":
                         loss[k] = v
                         s += "%s %f   " % (k, v)
 
-                        # if total_val_loss.get(k) is None:
-                        #     stats['val_loss'][k] = []
-                        # v = round(float(v), 4)
-                        # stats['val_loss'][k].append(v)
-
                     if i % args.print_every_val == 0:
                         print("Iter %d/%d    loss %s" % (i, total_val_iter, s))
 
@@ -211,18 +214,17 @@ if __name__ == "__main__":
                 print("Average val loss    %s" % s)
             
             # save stats
-            log_file = file_format + '_train.json'
             with open(log_file, "w") as f:
                 json.dump(stats, f)
 
             # save model
             if epoch % args.save_every_epoch == 0:
-                model_file = file_format + '_%d.pt' % (epoch)
+                model_file = os.path.join(out_dir, "epoch_%d.pt" % epoch)
                 print("\nSaving model to %s\n" % (model_file))
                 torch.save({'epoch': epoch, 'model_state': model.save_state()}, model_file)
 
         # save model from last epoch
-        model_file = file_format + '_%d.pt' % (epoch)
+        model_file = os.path.join(out_dir, "epoch_%d.pt" % epoch)
         print("\nSaving model to %s\n" % (model_file))
         torch.save({'epoch': epoch, 'model_state': model.save_state()}, model_file)
 
@@ -245,7 +247,7 @@ if __name__ == "__main__":
 
         print("Average loss %s" % (s))
 
-        log_file = file_format + '_test.json'
+        log_file = os.path.join(out_dir, "test.json")
         with open(log_file, "w") as f:
             json.dump(test_loss, f)
 
