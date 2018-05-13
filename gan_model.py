@@ -42,7 +42,7 @@ class GANModel:
         # real y and x -> 1
         loss_D_real = self.gan_loss(self.D(y, x), 1) / 2
         # gen and x -> 0
-        loss_D_fake = self.gan_loss(self.D(gen, x), 0) / 2
+        loss_D_fake = self.gan_loss(self.D(gen.detach(), x), 0) / 2
         # Combine
         loss_D = (loss_D_real + loss_D_fake)
 
@@ -54,7 +54,7 @@ class GANModel:
         ############################
         self.optimizer_G.zero_grad()
 
-        gen = self.G(x)
+        # gen = self.G(x)
         # GAN loss of G
         loss_G_gan = self.gan_loss(self.D(gen, x), 1)
         # L1 loss of G
