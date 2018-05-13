@@ -16,17 +16,17 @@ def plot(dict, figname="./checkpoints/results.png"):
 
 def plot_sub(train_ax, losses, mode="Train"):
     ax0, ax1, ax2 = train_ax
-    ax0.plot(losses["G_gan"], label="G_gan")
-    ax0.plot(losses["G_L1"], label="G_L1")
     ax0.plot(losses["G"], label="G")
+    ax0.plot(losses["G_L1"], label="G_L1")
+    ax0.plot(losses["G_gan"], label="G_gan")
     ax0.set_title("%s G Loss" % mode)
     ax0.set_xlabel("Iterations")
     ax0.set_ylabel("Loss")
     ax0.legend()
 
+    ax1.plot(losses["D"], label="D")
     ax1.plot(losses["D_real"], label="D_real")
     ax1.plot(losses["D_fake"], label="D_fake")
-    ax1.plot(losses["D"], label="D")
     ax1.set_title("%s D Loss" % mode)
     ax1.set_xlabel("Iterations")
     ax1.set_ylabel("Loss")
