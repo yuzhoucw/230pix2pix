@@ -11,8 +11,8 @@ class GANDataset(Dataset):
     # Initial logic here, including reading the image files and transform the data
     def __init__(self, rootA, rootB, transform=None, unaligned=False, device=None):
         # initialize image path and transformation
-        self.image_pathsA = list(map(lambda x: os.path.join(rootA, x), os.listdir(rootA)))
-        self.image_pathsB = list(map(lambda x: os.path.join(rootB, x), os.listdir(rootB)))
+        self.image_pathsA = sorted(list(map(lambda x: os.path.join(rootA, x), os.listdir(rootA))))
+        self.image_pathsB = sorted(list(map(lambda x: os.path.join(rootB, x), os.listdir(rootB))))
         self.transform = transform
         self.unaligned = unaligned
         self.device = device
