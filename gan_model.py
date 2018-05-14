@@ -102,6 +102,11 @@ class GANModel:
         return {'G': loss_G, 'G_gan': loss_G_gan, 'G_L1': loss_G_L1,
                 'D': loss_D, 'D_real': loss_D_real, 'D_fake': loss_D_fake}
 
+    def test(self, images, i, out_dir_img):
+        A, B = images
+        gen = self.G(A)
+        self.save_image((A, gen, B), out_dir_img, i)
+
 
     def gan_loss(self, out, label):
         return self.gan_loss_fn(out, torch.ones_like(out) if label else torch.zeros_like(out))

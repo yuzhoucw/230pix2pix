@@ -230,24 +230,29 @@ if __name__ == "__main__":
 
     if args.mode == "test":
         print("\nEvaluating on test set...")
-        test_loss = {}
+        out_dir_img = os.path.dirname(args.pretrain_path)
         for i, images in enumerate(test_loader):
-            loss = model.eval(images)
+            if i < 5:
+                model.test(images, i, out_dir_img)
 
-            for k, v in loss.items():
-                if test_loss.get(k) is None:
-                    test_loss[k] = 0
-                v = round(float(v), 4)
-                test_loss[k] += v
-
-        s = ""
-        for k, v in test_loss.items():
-            test_loss[k] = round(v / (i+1), 4)
-            s += "%s %f   " % (k, test_loss[k])
-
-        print("Average loss %s" % (s))
-
-        log_file = os.path.join(out_dir, "test.json")
-        with open(log_file, "w") as f:
-            json.dump(test_loss, f)
+        # test_loss = {}
+        # for i, images in enumerate(test_loader):
+        #     loss = model.eval(images)
+        #
+        #     for k, v in loss.items():
+        #         if test_loss.get(k) is None:
+        #             test_loss[k] = 0
+        #         v = round(float(v), 4)
+        #         test_loss[k] += v
+        #
+        # s = ""
+        # for k, v in test_loss.items():
+        #     test_loss[k] = round(v / (i+1), 4)
+        #     s += "%s %f   " % (k, test_loss[k])
+        #
+        # print("Average loss %s" % (s))
+        #
+        # log_file = os.path.join(out_dir, "test.json")
+        # with open(log_file, "w") as f:
+        #     json.dump(test_loss, f)
 
