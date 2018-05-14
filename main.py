@@ -138,8 +138,11 @@ if __name__ == "__main__":
         total_train_iter = math.ceil(len(train_loader) / args.batch_size)
         eval_n = min(args.eval_n, len(val_loader))
         total_val_iter = math.ceil(eval_n / args.batch_size)
+
+
         for epoch in range(start_epoch, start_epoch + args.n_epoch):
             print("\n==== Epoch {:d} ====".format(epoch))
+            t_start = time.time()
 
             # train
             for i, images in enumerate(train_loader):
@@ -172,6 +175,8 @@ if __name__ == "__main__":
                     viz.line(X=np.asarray([train_vis_iter]), Y=np.asarray([loss['D_B']]), name='D_B', win=win_train_D)
                     viz.line(X=np.asarray([train_vis_iter]), Y=np.asarray([loss['D']]), name='D', win=win_train_D)
                 train_vis_iter += 1
+
+            print("Time taken: %.2f m" % ((time.time() - t_start) / 60))
 
             # eval
             if eval_n > 0:
