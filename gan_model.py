@@ -69,7 +69,7 @@ class GANModel:
         return {'G': loss_G, 'G_gan': loss_G_gan, 'G_L1': loss_G_L1,
                 'D': loss_D, 'D_real': loss_D_real, 'D_fake': loss_D_fake}
 
-    def eval(self, input):
+    def eval(self, input, save, out_dir_img, epoch):
         self.G.eval()
         self.D.eval()
 
@@ -98,14 +98,15 @@ class GANModel:
         # Combine
         loss_G = loss_G_gan + loss_G_L1
 
+        if save:
+            self.save_image((x, y, gen), out_dir_img, epoch)
 
         return {'G': loss_G, 'G_gan': loss_G_gan, 'G_L1': loss_G_L1,
                 'D': loss_D, 'D_real': loss_D_real, 'D_fake': loss_D_fake}
 
     def test(self, images, i, out_dir_img):
         A, B = images
-        gen = self.G(A)
-        self.save_image((A, gen, B), out_dir_img, i)
+        self.save_image((A, B, self.G(A)), out_dir_img, i)
 
 
     def gan_loss(self, out, label):
@@ -137,11 +138,11 @@ class GANModel:
 
     def save_image(self, input, filepath, time_stamp):
         """ input is a tuple of the images we want to compare """
-        A, gen, B = input
+        A, B, gen = input
 
-        img_A, img_gen, img_B = self.tensor2image(A), self.tensor2image(gen), self.tensor2image(B)
+        img_A, img_B, img_gen = self.tensor2image(A), self.tensor2image(B), self.tensor2image(gen)
 
-        merged = self.merge_images(img_A, img_gen, img_B)
+        merged = self.merge_images(img_A, img_B, img_gen)
         path = os.path.join(filepath, 'sample-aerial-map-%s.png' % time_stamp)
         scipy.misc.imsave(path, merged)
         print('saved %s' % path)
