@@ -3,6 +3,7 @@ from model_modules import *
 import numpy as np
 import scipy.misc
 import os
+import itertools
 
 class GANModel:
 
@@ -26,6 +27,11 @@ class GANModel:
     def to(self, device):
         self.G.to(device)
         self.D.to(device)
+
+        for state in itertools.chain(self.optimizer_G.state.values(), self.optimizer_D.state.values()):
+            for k, v in state.items():
+                if isinstance(v, torch.Tensor):
+                    state[k] = v.to(device)
 
     def train(self, input):
         self.G.train()
