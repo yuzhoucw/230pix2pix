@@ -49,6 +49,7 @@ class GANModel:
         loss_D.backward()
         self.optimizer_D.step()
 
+        # self.save_image((x, gen, y), 'datasets/maps/samples', '2018')
         ############################
         # G loss
         ############################
@@ -140,9 +141,10 @@ class GANModel:
         """ input is a tuple of the images we want to compare """
         A, B, gen = input
 
-        img_A, img_B, img_gen = self.tensor2image(A), self.tensor2image(B), self.tensor2image(gen)
+        # img_A, img_B, img_gen = self.tensor2image(A), self.tensor2image(B), self.tensor2image(gen)
 
-        merged = self.merge_images(img_A, img_B, img_gen)
+        # merged = self.merge_images(img_A, img_B, img_gen)
+        merged = self.tensor2image(self.merge_images(A, B, gen))
         path = os.path.join(filepath, 'sample-aerial-map-%s.png' % time_stamp)
         scipy.misc.imsave(path, merged)
         print('saved %s' % path)
@@ -153,9 +155,11 @@ class GANModel:
         return image.astype(np.uint8)
 
     def merge_images(self, sources, targets, generated):
-        row, _, h, w = sources.shape
+        # row, _, h, w = sources.shape
+        row, _, h, w = sources.size()
         # row = int(np.sqrt(batch_size))
-        merged = np.zeros([3, row * h, w * 3])
+        # merged = np.zeros([3, row * h, w * 3])
+        merged = torch.zeros([3, row * h, w * 3])
         for idx, (s, t, g) in enumerate(zip(sources, targets, generated)):
             i = idx
             # i = (idx + 1) // row
@@ -166,4 +170,4 @@ class GANModel:
             merged[:, i * h:(i + 1) * h, 0:w] = s
             merged[:, i * h:(i + 1) * h, w:2 * w] = g
             merged[:, i * h:(i + 1) * h, 2 * w:3 * w] = t
-        return merged.transpose(1, 2, 0)
+        return merged.permute(1, 2, 0)
