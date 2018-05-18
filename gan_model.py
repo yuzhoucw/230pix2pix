@@ -21,6 +21,7 @@ class GANModel:
         self.L1_loss_fn = torch.nn.L1Loss()
 
         self.lambd = args.lambd
+        self.lambd_d = args.lambd_d
 
 
 
@@ -46,11 +47,11 @@ class GANModel:
 
         gen = self.G(x)
         # real y and x -> 1
-        loss_D_real = self.gan_loss(self.D(y, x), 1) / 2
+        loss_D_real = self.gan_loss(self.D(y, x), 1) * self.lambd_d
         # gen and x -> 0
-        loss_D_fake = self.gan_loss(self.D(gen.detach(), x), 0) / 2
+        loss_D_fake = self.gan_loss(self.D(gen.detach(), x), 0) * self.lambd_d
         # Combine
-        loss_D = (loss_D_real + loss_D_fake)
+        loss_D = loss_D_real + loss_D_fake
 
         loss_D.backward()
         self.optimizer_D.step()
@@ -92,11 +93,11 @@ class GANModel:
         # D loss
         ############################
         # real y and x -> 1
-        loss_D_real = self.gan_loss(self.D(y, x), 1) /2
+        loss_D_real = self.gan_loss(self.D(y, x), 1) * self.lambd_d
         # gen and x -> 0
-        loss_D_fake = self.gan_loss(self.D(gen, x), 0) /2
+        loss_D_fake = self.gan_loss(self.D(gen, x), 0) * self.lambd_d
         # Combine
-        loss_D = (loss_D_real + loss_D_fake)
+        loss_D = loss_D_real + loss_D_fake
 
         ############################
         # G loss
