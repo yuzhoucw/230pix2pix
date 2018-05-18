@@ -33,6 +33,7 @@ parser.add_argument('--batch_size', default=1, type=int)
 parser.add_argument('--n_epoch', default=100, type=int)
 parser.add_argument('--beta1', default=0.5, type=float, help='momentum term of adam')
 parser.add_argument('--lambd', default=100.0, type=float, help='weight for L1 loss')
+parser.add_argument('--lambd_d', default=0.5, type=float, help='D loss scale')
 # Files
 parser.add_argument('--out_dir', default='./checkpoints', type=str)
 parser.add_argument('--data_dir', default='./datasets/maps/', type=str)
