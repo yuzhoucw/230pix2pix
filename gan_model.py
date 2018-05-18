@@ -117,7 +117,7 @@ class GANModel:
 
     def test(self, images, i, out_dir_img):
         A, B = images
-        self.save_image((A, B, self.G(A)), out_dir_img, i)
+        self.save_image((A, B, self.G(A)), out_dir_img, "test_%d" % i)
 
 
     def gan_loss(self, out, label):
