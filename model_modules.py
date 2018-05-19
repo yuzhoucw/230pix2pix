@@ -27,6 +27,7 @@ class DecoderBlock(nn.Module):
 
         self.convT = nn.ConvTranspose2d(in_channels, out_channels, kernel_size, stride, padding, bias)
         self.bn = nn.BatchNorm2d(out_channels)
+        self.instance = nn.InstanceNorm2d(out_channels)
         self.relu = nn.ReLU()
         self.dropout_prob = dropout_prob
         self.drop = nn.Dropout2d(dropout_prob)
