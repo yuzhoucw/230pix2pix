@@ -18,6 +18,7 @@ parser.add_argument('--unaligned', default=False, type=bool)
 parser.add_argument('--resize', default=286, type=int)
 parser.add_argument('--crop', default=256, type=int)
 # Training
+parser.add_argument('--device_id', default=0, type=int)
 parser.add_argument('--mode', default="train", type=str)
 parser.add_argument('--pretrain_path', default='', type=str)
 parser.add_argument('--print_every_train', default=100, type=int)
@@ -33,6 +34,7 @@ parser.add_argument('--batch_size', default=1, type=int)
 parser.add_argument('--n_epoch', default=100, type=int)
 parser.add_argument('--beta1', default=0.5, type=float, help='momentum term of adam')
 parser.add_argument('--lambd', default=100.0, type=float, help='weight for L1 loss')
+parser.add_argument('--lambd_d', default=0.5, type=float, help='D loss scale')
 # Files
 parser.add_argument('--out_dir', default='./checkpoints', type=str)
 parser.add_argument('--data_dir', default='./datasets/maps/', type=str)
@@ -44,8 +46,8 @@ parser.add_argument('--port', default=8097, type=int)
 
 if __name__ == "__main__":
 
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     args = parser.parse_args()
+    device = torch.device("cuda:%d" % args.device_id if torch.cuda.is_available() else "cpu")
 
     s = "Using %s\n\n" % device
     for k, v in vars(args).items():
@@ -77,7 +79,7 @@ if __name__ == "__main__":
         val_loader = dataloader.get_dataloader(os.path.join(args.data_dir, "valA"),
                                                os.path.join(args.data_dir, "valB"),
                                                resize=args.resize, crop=args.crop,
-                                               batch_size=args.batch_size, unaligned=args.unaligned, device=device)
+                                               batch_size=1, unaligned=args.unaligned, device=device) #TODO val batch size
     if args.mode == "test":
         out_dir = os.path.dirname(args.pretrain_path)
         out_dir_img = os.path.join(out_dir, "images", "test")
@@ -87,7 +89,7 @@ if __name__ == "__main__":
         test_loader = dataloader.get_dataloader(os.path.join(args.data_dir, "testA"),
                                                 os.path.join(args.data_dir, "testB"),
                                                 resize=args.resize, crop=args.crop,
-                                                batch_size=args.batch_size, unaligned=args.unaligned, device=device)
+                                                batch_size=1, unaligned=args.unaligned, device=device)
 
     if args.vis:
         if args.port:
@@ -136,9 +138,9 @@ if __name__ == "__main__":
 
         train_vis_iter = 0
         eval_vis_iter = 0
-        total_train_iter = math.ceil(len(train_loader) / args.batch_size)
-        eval_n = min(args.eval_n, len(val_loader))
-        total_val_iter = math.ceil(eval_n / args.batch_size)
+        total_train_iter = len(train_loader)
+        eval_n = min(args.eval_n, len(val_loader)) #TODO val batch
+        total_val_iter = eval_n
 
 
         for epoch in range(start_epoch, start_epoch + args.n_epoch):
@@ -148,7 +150,7 @@ if __name__ == "__main__":
             # train
             for i, images in enumerate(train_loader):
 
-                loss = model.train(images)
+                loss = model.train(images, save=(i == 0), out_dir_img=out_dir_img, epoch=epoch)
 
                 # update stats
                 s = ""

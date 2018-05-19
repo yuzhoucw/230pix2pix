@@ -21,6 +21,7 @@ class GANModel:
         self.L1_loss_fn = torch.nn.L1Loss()
 
         self.lambd = args.lambd
+        self.lambd_d = args.lambd_d
 
 
 
@@ -33,7 +34,7 @@ class GANModel:
                 if isinstance(v, torch.Tensor):
                     state[k] = v.to(device)
 
-    def train(self, input):
+    def train(self, input, save, out_dir_img, epoch):
         self.G.train()
         self.D.train()
 
@@ -46,11 +47,11 @@ class GANModel:
 
         gen = self.G(x)
         # real y and x -> 1
-        loss_D_real = self.gan_loss(self.D(y, x), 1) / 2
+        loss_D_real = self.gan_loss(self.D(y, x), 1) * self.lambd_d
         # gen and x -> 0
-        loss_D_fake = self.gan_loss(self.D(gen.detach(), x), 0) / 2
+        loss_D_fake = self.gan_loss(self.D(gen.detach(), x), 0) * self.lambd_d
         # Combine
-        loss_D = (loss_D_real + loss_D_fake)
+        loss_D = loss_D_real + loss_D_fake
 
         loss_D.backward()
         self.optimizer_D.step()
@@ -72,6 +73,9 @@ class GANModel:
         loss_G.backward()
         self.optimizer_G.step()
 
+        # save image
+        if save:
+            self.save_image((x, y, gen), out_dir_img, "train_ep_%d" % epoch)
 
         return {'G': loss_G, 'G_gan': loss_G_gan, 'G_L1': loss_G_L1,
                 'D': loss_D, 'D_real': loss_D_real, 'D_fake': loss_D_fake}
@@ -89,11 +93,11 @@ class GANModel:
         # D loss
         ############################
         # real y and x -> 1
-        loss_D_real = self.gan_loss(self.D(y, x), 1) /2
+        loss_D_real = self.gan_loss(self.D(y, x), 1) * self.lambd_d
         # gen and x -> 0
-        loss_D_fake = self.gan_loss(self.D(gen, x), 0) /2
+        loss_D_fake = self.gan_loss(self.D(gen, x), 0) * self.lambd_d
         # Combine
-        loss_D = (loss_D_real + loss_D_fake)
+        loss_D = loss_D_real + loss_D_fake
 
         ############################
         # G loss
@@ -105,15 +109,16 @@ class GANModel:
         # Combine
         loss_G = loss_G_gan + loss_G_L1
 
+        # save image
         if save:
-            self.save_image((x, y, gen), out_dir_img, epoch)
+            self.save_image((x, y, gen), out_dir_img, "val_ep_%d" % epoch)
 
         return {'G': loss_G, 'G_gan': loss_G_gan, 'G_L1': loss_G_L1,
                 'D': loss_D, 'D_real': loss_D_real, 'D_fake': loss_D_fake}
 
     def test(self, images, i, out_dir_img):
         A, B = images
-        self.save_image((A, B, self.G(A)), out_dir_img, i)
+        self.save_image((A, B, self.G(A)), out_dir_img, "test_%d" % i)
 
 
     def gan_loss(self, out, label):
@@ -143,7 +148,7 @@ class GANModel:
                 'optimG': self.optimizer_G.state_dict(),
                 'optimD': self.optimizer_D.state_dict()}
 
-    def save_image(self, input, filepath, time_stamp):
+    def save_image(self, input, filepath, fname):
         """ input is a tuple of the images we want to compare """
         A, B, gen = input
 
@@ -151,7 +156,7 @@ class GANModel:
 
         # merged = self.merge_images(img_A, img_B, img_gen)
         merged = self.tensor2image(self.merge_images(A, B, gen))
-        path = os.path.join(filepath, 'sample-aerial-map-%s.png' % time_stamp)
+        path = os.path.join(filepath, '%s.png' % fname)
         scipy.misc.imsave(path, merged)
         print('saved %s' % path)
 
