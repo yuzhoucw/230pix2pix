@@ -123,7 +123,7 @@ class Discriminator(nn.Module):
         self.disc2 = EncoderBlock(64, 128, bias=bias, norm=norm)
         self.disc3 = EncoderBlock(128, 256, bias=bias, norm=norm)
         self.disc4 = EncoderBlock(256, 512, bias=bias, norm=norm, stride=1)
-        self.disc5 = EncoderBlock(512, self.out_channels, bias=bias, stride=1, do_norm=False)
+        self.disc5 = EncoderBlock(512, out_channels, bias=bias, stride=1, do_norm=False)
 
     def forward(self, x, ref):
         d1 = self.disc1(torch.cat([x, ref],1))
