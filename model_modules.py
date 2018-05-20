@@ -3,48 +3,58 @@ import torch.nn as nn
 
 
 class EncoderBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size=4, stride=2, padding=1, dilation=1, groups=1, bias=False, do_batch_norm=True): # bias default is True in Conv2d
+    def __init__(self, in_channels, out_channels, kernel_size=4, stride=2, padding=1, dilation=1, groups=1, bias=False, do_batch_norm=True, do_activation = True): # bias default is True in Conv2d
         super(EncoderBlock, self).__init__()
 
-        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding, dilation, groups, bias)
+        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, stride=stride, padding=padding, dilation=dilation, groups=groups, bias=bias)
         self.bn = nn.BatchNorm2d(out_channels)
-        self.leakyRelu = nn.LeakyReLU(0.2)
+        self.leakyRelu = nn.LeakyReLU(0.2, True)
         self.do_batch_norm = do_batch_norm
+        self.do_activation = do_activation
 
     def forward(self, x):
-       x = self.conv(x)
-       if self.do_batch_norm:
-           x = self.bn(x)
-       x = self.leakyRelu(x)
-       return x
+        if self.do_activation:
+            x = self.leakyRelu(x)
+
+        x = self.conv(x)
+
+        if self.do_batch_norm:
+            x = self.bn(x)
+
+        return x
 
 class DecoderBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size=4, stride=2, padding=1, bias=False, do_batch_norm=True, dropout_prob=0.0):
+    def __init__(self, in_channels, out_channels, kernel_size=4, stride=2, padding=1, bias=False, do_batch_norm=True, do_activation = True, dropout_prob=0.0):
         super(DecoderBlock, self).__init__()
 
-        self.convT = nn.ConvTranspose2d(in_channels, out_channels, kernel_size, stride, padding, bias)
+        self.convT = nn.ConvTranspose2d(in_channels, out_channels, kernel_size=kernel_size, stride=stride, padding=padding, bias=bias)
         self.bn = nn.BatchNorm2d(out_channels)
         self.relu = nn.ReLU()
         self.dropout_prob = dropout_prob
         self.drop = nn.Dropout2d(dropout_prob)
         self.do_batch_norm = do_batch_norm
+        self.do_activation = do_activation
 
     def forward(self, x):
-       x = self.convT(x)
-       if self.dropout_prob != 0:
-           x= self.drop(x)
-       if self.do_batch_norm:
-           x = self.bn(x)
-       x = self.relu(x)
+        if self.do_activation:
+            x = self.relu(x)
 
-       return x
+        x = self.convT(x)
+
+        if self.do_batch_norm:
+           x = self.bn(x)
+
+        if self.dropout_prob != 0:
+            x= self.drop(x)
+
+        return x
 
 class Generator(nn.Module):
     def __init__(self, in_channels=3, out_channels=3):
         super(Generator, self).__init__()
 
         # 8-step encoder
-        self.encoder1 = EncoderBlock(in_channels, 64, do_batch_norm=False)
+        self.encoder1 = EncoderBlock(in_channels, 64, do_batch_norm=False, do_activation=False)
         self.encoder2 = EncoderBlock(64, 128)
         self.encoder3 = EncoderBlock(128, 256)
         self.encoder4 = EncoderBlock(256, 512)
@@ -54,10 +64,10 @@ class Generator(nn.Module):
         self.encoder8 = EncoderBlock(512, 512, do_batch_norm=False)
 
         # 8-step UNet decoder
-        self.decoder1 = DecoderBlock(512, 512, dropout_prob=0.5)
+        self.decoder1 = DecoderBlock(512, 512)
         self.decoder2 = DecoderBlock(1024, 512, dropout_prob=0.5)
         self.decoder3 = DecoderBlock(1024, 512, dropout_prob=0.5)
-        self.decoder4 = DecoderBlock(1024, 512)
+        self.decoder4 = DecoderBlock(1024, 512, dropout_prob=0.5)
         self.decoder5 = DecoderBlock(1024, 256)
         self.decoder6 = DecoderBlock(512, 128)
         self.decoder7 = DecoderBlock(256, 64)
@@ -95,11 +105,12 @@ class Discriminator(nn.Module):
         self.out_channels = out_channels
 
         # 70x70 discriminator
-        self.disc1 = EncoderBlock(in_channels * 2, 64, do_batch_norm=False)
+        self.disc1 = EncoderBlock(in_channels * 2, 64, do_batch_norm=False, do_activation=False)
         self.disc2 = EncoderBlock(64, 128)
         self.disc3 = EncoderBlock(128, 256)
         self.disc4 = EncoderBlock(256, 512, stride=1)
-        self.conv = nn.Conv2d(in_channels = 512, out_channels = self.out_channels, kernel_size=4, stride=1, padding = 1)
+        self.disc5 = EncoderBlock(512, self.out_channels, stride=1, do_batch_norm=False)
+
 
 
     def forward(self, x, ref):
@@ -107,8 +118,8 @@ class Discriminator(nn.Module):
         d2 = self.disc2(d1)
         d3 = self.disc3(d2)
         d4 = self.disc4(d3)
-        final = self.conv(d4)
-        final = nn.Sigmoid()(final)
+        d5 = self.disc5(d4)
+        final = nn.Sigmoid()(d5)
         return final
 
 
