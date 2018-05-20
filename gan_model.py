@@ -9,8 +9,8 @@ class GANModel:
 
     def __init__(self, args):
         # Code (paper): G_A (G), G_B (F), D_A (D_Y), D_B (D_X)
-        self.G = Generator()
-        self.D = Discriminator()
+        self.G = Generator(bias=args.bias, norm=args.norm, dropout_prob=args.dropout)
+        self.D = Discriminator(bias=args.bias, norm=args.norm)
 
         self.optimizer_G = torch.optim.Adam(self.G.parameters(),
                                             lr=args.lr, betas=(args.beta1, 0.999))
