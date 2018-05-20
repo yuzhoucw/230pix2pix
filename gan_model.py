@@ -35,8 +35,8 @@ class GANModel:
                     state[k] = v.to(device)
 
     def train(self, input, save, out_dir_img, epoch):
-        self.G.train()
-        self.D.train()
+        # self.G.train()
+        # self.D.train()
 
         x, y = input
 
@@ -81,8 +81,8 @@ class GANModel:
                 'D': loss_D, 'D_real': loss_D_real, 'D_fake': loss_D_fake}
 
     def eval(self, input, save, out_dir_img, epoch):
-        self.G.eval()
-        self.D.eval()
+        # self.G.eval()
+        # self.D.eval()
 
         x, y = input
         gen = self.G(x)
