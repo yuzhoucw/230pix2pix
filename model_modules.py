@@ -71,7 +71,7 @@ class Generator(nn.Module):
         self.decoder5 = DecoderBlock(1024, 256)
         self.decoder6 = DecoderBlock(512, 128)
         self.decoder7 = DecoderBlock(256, 64)
-        self.decoder8 = DecoderBlock(128, out_channels)
+        self.decoder8 = DecoderBlock(128, out_channels, do_batch_norm=False)
 
 
     def forward(self, x):
