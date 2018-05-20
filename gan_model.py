@@ -5,14 +5,15 @@ import scipy.misc
 import os
 import itertools
 
+
+
 class GANModel:
 
     def __init__(self, args):
         # Code (paper): G_A (G), G_B (F), D_A (D_Y), D_B (D_X)
-        # self.G = Generator(dropout_prob = args.dropout, instance=args.instance, bias=args.bias)
-        self.G = GeneratorJohnson(instance=args.instance, bias=args.bias)
-
-        self.D = Discriminator(instance=args.instance, bias=args.bias)
+        # self.G = Generator(bias=args.bias, norm=args.norm, dropout_prob=args.dropout)
+        self.G = GeneratorJohnson(bias=args.bias, norm=args.norm)
+        self.D = Discriminator(bias=args.bias, norm=args.norm)
 
         self.optimizer_G = torch.optim.Adam(self.G.parameters(),
                                             lr=args.lr, betas=(args.beta1, 0.999))
@@ -37,8 +38,8 @@ class GANModel:
                     state[k] = v.to(device)
 
     def train(self, input, save, out_dir_img, epoch):
-        self.G.train()
-        self.D.train()
+        # self.G.train()
+        # self.D.train()
 
         x, y = input
 
@@ -83,8 +84,8 @@ class GANModel:
                 'D': loss_D, 'D_real': loss_D_real, 'D_fake': loss_D_fake}
 
     def eval(self, input, save, out_dir_img, epoch):
-        self.G.eval()
-        self.D.eval()
+        # self.G.eval()
+        # self.D.eval()
 
         x, y = input
         gen = self.G(x)
