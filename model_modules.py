@@ -120,11 +120,10 @@ class Discriminator(nn.Module):
 
         # 70x70 discriminator
         self.disc1 = EncoderBlock(in_channels * 2, 64, bias=bias, do_norm=False, do_activation=False)
-        self.disc2 = EncoderBlock(64, 128, bias=bias)
-        self.disc3 = EncoderBlock(128, 256, bias=bias)
-        self.disc4 = EncoderBlock(256, 512, bias=bias, stride=1)
+        self.disc2 = EncoderBlock(64, 128, bias=bias, norm=norm)
+        self.disc3 = EncoderBlock(128, 256, bias=bias, norm=norm)
+        self.disc4 = EncoderBlock(256, 512, bias=bias, norm=norm, stride=1)
         self.disc5 = EncoderBlock(512, self.out_channels, bias=bias, stride=1, do_norm=False)
-
 
 
     def forward(self, x, ref):
