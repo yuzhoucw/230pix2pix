@@ -8,6 +8,9 @@ import itertools
 class GANModel:
 
     def __init__(self, args):
+        self.start_epoch = 0
+        self.args = args
+
         # Code (paper): G_A (G), G_B (F), D_A (D_Y), D_B (D_X)
         self.G = Generator(bias=args.bias, norm=args.norm, dropout_prob=args.dropout)
         self.D = Discriminator(bias=args.bias, norm=args.norm)
@@ -17,13 +20,25 @@ class GANModel:
         self.optimizer_D = torch.optim.Adam(self.D.parameters(),
                                             lr=args.lr, betas=(args.beta1, 0.999))
 
+        self.scheduler_G = torch.optim.lr_scheduler.LambdaLR(self.optimizer_G, lr_lambda=self.lr_lambda)
+        self.scheduler_D = torch.optim.lr_scheduler.LambdaLR(self.optimizer_D, lr_lambda=self.lr_lambda)
+
         self.gan_loss_fn = torch.nn.BCELoss()
         self.L1_loss_fn = torch.nn.L1Loss()
 
         self.lambd = args.lambd
         self.lambd_d = args.lambd_d
 
+    def lr_lambda(self, epoch):
+        return 1.0 - max(0, epoch + self.start_epoch - self.args.lr_decay_start) / (self.args.lr_decay_n + 1)
 
+    def update_scheduler(self):
+        self.scheduler_G.step()
+        self.scheduler_D.step()
+        print('learning rate = %.7f' % self.optimizer_G.param_groups[0]['lr'])
+
+    def set_start_epoch(self, epoch):
+        self.start_epoch = epoch
 
     def to(self, device):
         self.G.to(device)
