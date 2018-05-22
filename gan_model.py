@@ -43,9 +43,9 @@ class GANModel:
         print('learning rate = %.7f' % self.optimizer_G.param_groups[0]['lr'])
 
     def d_update(self, d_loss, epoch):
-        # d_update_frequency = 1 discriminator update / N generator update
-        d_update_epoch = list(range(1,300,int(1/self.d_update_frequency)))
-        if epoch in d_update_epoch:
+        # d_update_frequency = n epochs per update
+        # d_update_epoch = list(range(1,300,int(1/self.d_update_frequency)))
+        if epoch%self.d_update_frequency == 0:
             d_loss.backward()
             self.optimizer_D.step()
 
