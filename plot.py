@@ -64,7 +64,7 @@ def plot_sub(train_ax, losses, mode="Train"):
 #    ax2.legend()
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dir', default="", type=str)
+parser.add_argument('--dir', default="checkpoints", type=str)
 args = parser.parse_args()
 
 fname = os.path.join(args.dir, "train.json")

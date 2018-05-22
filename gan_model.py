@@ -32,6 +32,8 @@ class GANModel:
         self.lambd = args.lambd
         self.lambd_d = args.lambd_d
 
+        self.d_update_frequency = args.d_update_frequency
+
     def lr_lambda(self, epoch):
         return 1.0 - max(0, epoch + self.start_epoch - self.args.lr_decay_start) / (self.args.lr_decay_n + 1)
 
@@ -39,6 +41,13 @@ class GANModel:
         self.scheduler_G.step()
         self.scheduler_D.step()
         print('learning rate = %.7f' % self.optimizer_G.param_groups[0]['lr'])
+
+    def d_update(self, d_loss, epoch):
+        # d_update_frequency = 1 discriminator update / N generator update
+        d_update_epoch = list(range(1,300,int(1/self.d_update_frequency)))
+        if epoch in d_update_epoch:
+            d_loss.backward()
+            self.optimizer_D.step()
 
     def set_start_epoch(self, epoch):
         self.start_epoch = epoch
@@ -71,8 +80,9 @@ class GANModel:
         # Combine
         loss_D = loss_D_real + loss_D_fake
 
-        loss_D.backward()
-        self.optimizer_D.step()
+        self.d_update(loss_D, epoch)
+        # loss_D.backward()
+        # self.optimizer_D.step()
 
         # self.save_image((x, gen, y), 'datasets/maps/samples', '2018')
         ############################
