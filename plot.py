@@ -10,8 +10,8 @@ def plot(dict, figname="./checkpoints/results.png"):
 #    fig, (train_ax, val_ax) = plt.subplots(nrows=2, ncols=3, figsize=(30,10))
     fig, (train_ax, val_ax) = plt.subplots(nrows=2, ncols=2, figsize=(20,10))
 
-    plot_sub(train_ax, stats["train_loss"], "Train")
-    plot_sub(val_ax, stats["val_loss"], "Val")
+    plot_sub(train_ax, dict["train_loss"], "Train")
+    plot_sub(val_ax, dict["val_loss"], "Val")
 
     fig.tight_layout()
     plt.savefig(figname)
@@ -38,7 +38,7 @@ def plot_sub(train_ax, losses, mode="Train"):
     ax0.set_title("%s G Loss" % mode, fontsize=16, fontweight='bold')
     ax0.set_xlabel("Epoch",fontsize=16, fontweight='bold')
     ax0.set_ylabel("Loss",fontsize=16, fontweight='bold')
-    ax0.set_ylim([-2,60])
+    ax0.set_ylim([-2,20])
 #    ax0.set_xticklabels(np.arange(-20, 101, 20))
     ax0.tick_params(axis='both', which='major', labelsize=16)
     ax0.legend(fontsize=16)
@@ -52,7 +52,7 @@ def plot_sub(train_ax, losses, mode="Train"):
     ax1.set_title("%s D Loss" % mode, fontsize=16, fontweight='bold')
     ax1.set_xlabel("Epoch", fontsize=16, fontweight='bold')
     ax1.set_ylabel("Loss", fontsize=16, fontweight='bold')
-    ax1.set_ylim([-0.2,5])
+    ax1.set_ylim([-0.2,2])
     ax1.tick_params(axis='both', which='major', labelsize=16)
     ax1.legend(fontsize=16)
 
@@ -64,12 +64,25 @@ def plot_sub(train_ax, losses, mode="Train"):
 #    ax2.legend()
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dir', default="", type=str)
+parser.add_argument('--dir', default="", nargs='+', type=str)
 args = parser.parse_args()
 
-fname = os.path.join(args.dir, "train.json")
-outname = os.path.join(args.dir, "result.png")
-with open(fname) as f:
-    stats = json.load(f)
-    plot(stats, outname)
+new_stats = {}
+
+for folder in args.dir:
+    fname = os.path.join(folder, "train.json")
+    with open(fname) as f:
+        stats = json.load(f)
+        sets = stats.keys()
+        for set in sets:
+            if set not in new_stats.keys():
+                new_stats[set] = {}
+            for loss in stats[set].keys():
+                if loss not in new_stats[set].keys():
+                    new_stats[set][loss] = []
+                new_stats[set][loss] += stats[set][loss]
+
+outname = os.path.join(args.dir[0], "result.png")
+plot(new_stats, outname)
+
 
