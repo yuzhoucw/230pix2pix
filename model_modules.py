@@ -134,5 +134,32 @@ class Discriminator(nn.Module):
         final = nn.Sigmoid()(d5)
         return final
 
+class Discriminator286(nn.Module):
+    def __init__(self, in_channels=3, out_channels=1, bias = False, norm = 'batch'):
+        super(Discriminator286, self).__init__()
+
+        # self.out_channels = out_channels
+
+        # 286x286 discriminator
+        self.disc1 = EncoderBlock(in_channels * 2, 64, bias=bias, do_norm=False, do_activation=False)
+        self.disc2 = EncoderBlock(64, 128, bias=bias, norm=norm)
+        self.disc3 = EncoderBlock(128, 256, bias=bias, norm=norm)
+        self.disc4 = EncoderBlock(256, 512, bias=bias, norm=norm)
+        self.disc5 = EncoderBlock(512, 512, bias=bias, norm=norm)
+        self.disc6 = EncoderBlock(512, 512, bias=bias, stride=1, norm=norm)
+        self.disc7 = EncoderBlock(512, out_channels, bias=bias, stride=1, do_norm=False)
+
+    def forward(self, x, ref):
+        d1 = self.disc1(torch.cat([x, ref],1))
+        d2 = self.disc2(d1)
+        d3 = self.disc3(d2)
+        d4 = self.disc4(d3)
+        d5 = self.disc5(d4)
+        d6 = self.disc6(d5)
+        d7 = self.disc7(d6)
+        final = nn.Sigmoid()(d7)
+        return final
+
+
 
 
