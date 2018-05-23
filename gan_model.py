@@ -16,7 +16,8 @@ class GANModel:
         # Code (paper): G_A (G), G_B (F), D_A (D_Y), D_B (D_X)
         # self.G = Generator(bias=args.bias, norm=args.norm, dropout_prob=args.dropout)
         self.G = GeneratorJohnson(bias=args.bias, norm=args.norm)
-        self.D = Discriminator(bias=args.bias, norm=args.norm)
+        # self.D = Discriminator(bias=args.bias, norm=args.norm)
+        self.D = DiscriminatorPatchGAN(bias=args.bias, norm=args.norm)
 
         self.optimizer_G = torch.optim.Adam(self.G.parameters(),
                                             lr=args.lr, betas=(args.beta1, 0.999))
@@ -26,7 +27,7 @@ class GANModel:
         self.scheduler_G = torch.optim.lr_scheduler.LambdaLR(self.optimizer_G, lr_lambda=self.lr_lambda)
         self.scheduler_D = torch.optim.lr_scheduler.LambdaLR(self.optimizer_D, lr_lambda=self.lr_lambda)
 
-        self.gan_loss_fn = torch.nn.BCELoss()
+        self.gan_loss_fn = torch.nn.MSELoss()
         self.L1_loss_fn = torch.nn.L1Loss()
 
         self.lambd = args.lambd

@@ -245,7 +245,6 @@ class Discriminator(nn.Module):
         self.disc4 = EncoderBlock(256, 512, bias=bias, norm=norm, stride=1)
         self.disc5 = EncoderBlock(512, self.out_channels, bias=bias, stride=1, do_norm=False)
 
-
     def forward(self, x, ref):
         d1 = self.disc1(torch.cat([x, ref],1))
         d2 = self.disc2(d1)
@@ -255,5 +254,30 @@ class Discriminator(nn.Module):
         final = nn.Sigmoid()(d5)
         return final
 
+class DiscriminatorPatchGAN(nn.Module):
+    """
+    The Discriminator Architecture used in < Image-to-Image Translation with Conditional Adversarial
+    Networks > by Philip Isola, et al.
+    """
 
+    def __init__(self, in_channels=3, out_channels=1, kernel_size=4, bias=True, do_norm=True, norm='instance', sigmoid=False):
+        super(DiscriminatorPatchGAN, self).__init__()
+        model = []
+        model += [Conv_Norm_ReLU(in_channels*2, 64, kernel_size, padding=1, stride=2, bias=bias, relu=0.2, do_norm=False), # C64
+                  Conv_Norm_ReLU(64, 128, kernel_size, padding=1, stride=2, bias=bias, relu=0.2, do_norm=do_norm, norm=norm), # C128
+                  Conv_Norm_ReLU(128, 256, kernel_size, padding=1, stride=2, bias=bias, relu=0.2, do_norm=do_norm, norm=norm), # C256
+                  Conv_Norm_ReLU(256, 512, kernel_size, padding=1, bias=bias, relu=0.2, do_norm=do_norm, norm=norm), # C512
+                  nn.Conv2d(512, out_channels, kernel_size, padding=1, bias=bias)
+                  ]
+        if sigmoid:
+            model += [nn.Sigmoid()]
+        self.model = nn.Sequential(*model)
+
+    def forward(self, x, ref):
+        """
+        :param input: (N x channels x H x W)
+        :return: output: (N x channels x H/16 x W/16) of discrimination values
+        """
+        input = torch.cat([x, ref],1)
+        return self.model(input)
 
