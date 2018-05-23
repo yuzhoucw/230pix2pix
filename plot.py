@@ -7,7 +7,6 @@ import argparse
 import numpy as np
 
 def plot(dict, figname="./checkpoints/results.png"):
-#    fig, (train_ax, val_ax) = plt.subplots(nrows=2, ncols=3, figsize=(30,10))
     fig, (train_ax, val_ax) = plt.subplots(nrows=2, ncols=2, figsize=(20,10))
 
     plot_sub(train_ax, dict["train_loss"], "Train")
@@ -22,16 +21,13 @@ def smooth(y, box_pts = 40):
     return y_smooth
 
 def plot_sub(train_ax, losses, mode="Train"):
-#    ax0, ax1, ax2 = train_ax
     ax0, ax1 = train_ax
     length = len(losses["G"])
     if mode == "Train":
         ite = np.arange(length)/1096.0
     else:
         ite = np.arange(length)/100.0
-#    ax0.plot(losses["G"], label="G")
-#    ax0.plot(losses["G_L1"], label="G_L1")
-#    ax0.plot(losses["G_gan"], label="G_gan")
+
     ax0.plot(ite[0::10],smooth(losses["G"])[0::10], label="G")
     ax0.plot(ite[0::10],smooth(losses["G_L1"])[0::10], label="G_L1")
     ax0.plot(ite[0::10],smooth(losses["G_gan"])[0::10], label="G_gan")
@@ -39,13 +35,9 @@ def plot_sub(train_ax, losses, mode="Train"):
     ax0.set_xlabel("Epoch",fontsize=16, fontweight='bold')
     ax0.set_ylabel("Loss",fontsize=16, fontweight='bold')
     ax0.set_ylim([-2,20])
-#    ax0.set_xticklabels(np.arange(-20, 101, 20))
     ax0.tick_params(axis='both', which='major', labelsize=16)
     ax0.legend(fontsize=16)
 
-#    ax1.plot(losses["D"], label="D")
-#    ax1.plot(losses["D_real"], label="D_real")
-#    ax1.plot(losses["D_fake"], label="D_fake")
     ax1.plot(ite[0::10],smooth(losses["D"])[0::10], label="D")
     ax1.plot(ite[0::10],smooth(losses["D_real"])[0::10], label="D_real")
     ax1.plot(ite[0::10],smooth(losses["D_fake"])[0::10], label="D_fake")
@@ -56,18 +48,22 @@ def plot_sub(train_ax, losses, mode="Train"):
     ax1.tick_params(axis='both', which='major', labelsize=16)
     ax1.legend(fontsize=16)
 
-#    ax2.plot(losses["G"], label="G")
-#    ax2.plot(losses["D"], label="D")
-#    ax2.set_title("%s G, D Loss" % mode)
-#    ax2.set_xlabel("Iterations")
-#    ax2.set_ylabel("Loss")
-#    ax2.legend()
+
+def print_epoch_ave(log_file):
+    for set in ave_stats:
+        for loss in ave_stats[set]:
+            print("set = %s, %s = %f" %(set, loss, ave_stats[set][loss][-1]))
+
+    # with open(log_file, "w") as f:
+    #             json.dump(ave_stats, f)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dir', default="", nargs='+', type=str)
 args = parser.parse_args()
 
 new_stats = {}
+ave_stats = {}
+
 
 for folder in args.dir:
     fname = os.path.join(folder, "train.json")
@@ -77,12 +73,24 @@ for folder in args.dir:
         for set in sets:
             if set not in new_stats.keys():
                 new_stats[set] = {}
+                ave_stats[set] = {}
             for loss in stats[set].keys():
                 if loss not in new_stats[set].keys():
                     new_stats[set][loss] = []
+                    ave_stats[set][loss] = []
+
                 new_stats[set][loss] += stats[set][loss]
 
-outname = os.path.join(args.dir[0], "result.png")
-plot(new_stats, outname)
+                # calculate average loss in each epoch
+                if set == "train_loss":
+                    ave_loss = np.mean([ stats[set][loss][i:i + 1096] for i in range(0, len(stats[set][loss]), 1096) ], axis=1).tolist()
+                if set == "val_loss":
+                    ave_loss = np.mean([ stats[set][loss][i:i + 100] for i in range(0, len(stats[set][loss]), 100) ], axis=1).tolist()
+                ave_stats[set][loss] += ave_loss
 
+
+outname = os.path.join(args.dir[0], "result.png")
+log_file = os.path.join(args.dir[0], "epoch_ave.json")
+plot(new_stats, outname)
+print_epoch_ave(log_file)
 
