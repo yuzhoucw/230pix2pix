@@ -159,7 +159,7 @@ if __name__ == "__main__":
             # train
             for i, images in enumerate(train_loader):
 
-                loss = model.train(images, save=(i == 0), out_dir_img=out_dir_img, epoch=epoch)
+                loss = model.train(images, save=(i == 0), out_dir_img=out_dir_img, epoch=epoch, i=i)
 
                 # update stats
                 s = ""

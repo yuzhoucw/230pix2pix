@@ -79,7 +79,7 @@ class GANModel:
                 if isinstance(v, torch.Tensor):
                     state[k] = v.to(device)
 
-    def train(self, input, save, out_dir_img, epoch):
+    def train(self, input, save, out_dir_img, epoch, i):
         # self.G.train()
         # self.D.train()
 
@@ -98,7 +98,7 @@ class GANModel:
         # Combine
         loss_D = loss_D_real + loss_D_fake
 
-        self.d_update(loss_D, epoch)
+        self.d_update(loss_D, i)
         # loss_D.backward()
         # self.optimizer_D.step()
 
