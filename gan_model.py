@@ -12,13 +12,23 @@ class GANModel:
         self.args = args
 
         # Code (paper): G_A (G), G_B (F), D_A (D_Y), D_B (D_X)
-        self.G = Generator(bias=args.bias, norm=args.norm, dropout_prob=args.dropout)
-        # self.D = Discriminator(bias=args.bias, norm=args.norm)
-        if args.patch == 286:
-            self.D = Discriminator286(bias=args.bias, norm=args.norm)
+        if args.G == 'unet':
+            self.G = Generator(bias=args.bias, norm=args.norm, dropout_prob=args.dropout)
+        elif args.G == 'resnet':
+            raise NotImplementedError("resnet not implemented")
+        elif args.G == 'cyc':
+            self.G = GeneratorJohnson(bias=args.bias, norm=args.norm)
         else:
-            self.D = Discriminator(bias=args.bias, norm=args.norm)
+            raise NotImplementedError("Wrong G")
 
+        if args.D == 'patch':
+            self.D = Discriminator(bias=args.bias, norm=args.norm)
+        elif args.D == 'image':
+            self.D = Discriminator286(bias=args.bias, norm=args.norm)
+        elif args.D == 'cyc':
+            self.D = DiscriminatorPatchGAN(bias=args.bias, norm=args.norm)
+        else:
+            raise NotImplementedError("Wrong D")
 
         self.optimizer_G = torch.optim.Adam(self.G.parameters(),
                                             lr=args.lr, betas=(args.beta1, 0.999))
@@ -28,11 +38,19 @@ class GANModel:
         self.scheduler_G = torch.optim.lr_scheduler.LambdaLR(self.optimizer_G, lr_lambda=self.lr_lambda)
         self.scheduler_D = torch.optim.lr_scheduler.LambdaLR(self.optimizer_D, lr_lambda=self.lr_lambda)
 
-        self.gan_loss_fn = torch.nn.BCELoss()
+        if args.gan_loss == 'BCE':
+            self.gan_loss_fn = torch.nn.BCELoss()
+        elif args.gan_loss == 'MSE':
+            self.gan_loss_fn = torch.nn.MSELoss()
+        else:
+            raise NotImplementedError("GAN loss function error")
+
         self.L1_loss_fn = torch.nn.L1Loss()
 
         self.lambd = args.lambd
         self.lambd_d = args.lambd_d
+
+        self.d_update_frequency = args.d_update_frequency
 
     def lr_lambda(self, epoch):
         return 1.0 - max(0, epoch + self.start_epoch - self.args.lr_decay_start) / (self.args.lr_decay_n + 1)
@@ -41,6 +59,13 @@ class GANModel:
         self.scheduler_G.step()
         self.scheduler_D.step()
         print('learning rate = %.7f' % self.optimizer_G.param_groups[0]['lr'])
+
+    def d_update(self, d_loss, epoch):
+        # d_update_frequency = n epochs per update
+        # d_update_epoch = list(range(1,300,int(1/self.d_update_frequency)))
+        if epoch%self.d_update_frequency == 0:
+            d_loss.backward()
+            self.optimizer_D.step()
 
     def set_start_epoch(self, epoch):
         self.start_epoch = epoch
@@ -73,8 +98,9 @@ class GANModel:
         # Combine
         loss_D = loss_D_real + loss_D_fake
 
-        loss_D.backward()
-        self.optimizer_D.step()
+        self.d_update(loss_D, epoch)
+        # loss_D.backward()
+        # self.optimizer_D.step()
 
         # self.save_image((x, gen, y), 'datasets/maps/samples', '2018')
         ############################

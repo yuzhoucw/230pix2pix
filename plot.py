@@ -15,7 +15,7 @@ def plot(dict, figname="./checkpoints/results.png"):
     fig.tight_layout()
     plt.savefig(figname)
 
-def smooth(y, box_pts = 40):
+def smooth(y, box_pts = 20):
     box = np.ones(box_pts)/box_pts
     y_smooth = np.convolve(y, box, mode='same')
     return y_smooth

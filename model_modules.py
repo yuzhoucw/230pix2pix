@@ -1,13 +1,66 @@
 import torch
 import torch.nn as nn
 
+def norm_relu_layer(out_channel, do_norm, norm, relu):
+    if do_norm:
+        if norm == 'instance':
+            norm_layer = nn.InstanceNorm2d(out_channel)
+        elif norm == 'batch':
+            norm_layer = nn.BatchNorm2d(out_channel)
+        else:
+            raise NotImplementedError("norm error")
+    else:
+        norm_layer = nn.Dropout2d(0)  # Identity
+
+    if relu is None:
+        relu_layer = nn.ReLU()
+    else:
+        relu_layer = nn.LeakyReLU(relu, inplace=True)
+
+    return norm_layer, relu_layer
+
+def Conv_Norm_ReLU(in_channel, out_channel, kernel, padding=0, dilation=1, groups=1, stride=1, bias=True,
+                   do_norm=True, norm='batch', relu=None):
+    """
+    Convolutional -- Norm -- ReLU Unit
+    :param norm: 'batchnorm' --> use BatchNorm2D, 'instancenorm' --> use InstanceNorm2D, 'none' --> Identity()
+    :param relu: None -> Use vanilla ReLU; float --> Use LeakyReLU(relu)
+
+    :input (N x in_channel x H x W)
+    :return size same as nn.Conv2D
+    """
+    norm_layer, relu_layer = norm_relu_layer(out_channel, do_norm, norm, relu)
+
+    return nn.Sequential(
+        nn.Conv2d(in_channel, out_channel, kernel, padding=padding, stride=stride,
+                  dilation=dilation, groups=groups, bias=bias),
+        norm_layer,
+        relu_layer
+    )
+
+
+def Deconv_Norm_ReLU(in_channel, out_channel, kernel, padding=0, output_padding=0, stride=1, groups=1,
+                     bias=True, dilation=1, do_norm=True, norm='batch'):
+    """
+    Deconvolutional -- Norm -- ReLU Unit
+    :param norm: 'batchnorm' --> use BatchNorm2D, 'instancenorm' --> use InstanceNorm2D, 'none' --> Identity()
+    :param relu: None -> Use vanilla ReLU; float --> Use LeakyReLU(relu)
+
+    :input (N x in_channel x H x W)
+    :return size same as nn.ConvTranspose2D
+    """
+    norm_layer, relu_layer = norm_relu_layer(out_channel, do_norm, norm, relu=None)
+    return nn.Sequential(
+        nn.ConvTranspose2d(in_channel, out_channel, kernel, padding=padding, output_padding=output_padding,
+                           stride=stride, groups=groups, bias=bias, dilation=dilation),
+        norm_layer,
+        relu_layer
+    )
 
 class EncoderBlock(nn.Module):
-
     def __init__(self, in_channels, out_channels, kernel_size=4, stride=2, padding=1, dilation=1, groups=1, bias=False,
                  do_norm=True, norm = 'batch', do_activation = True): # bias default is True in Conv2d
         super(EncoderBlock, self).__init__()
-
         self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, stride=stride, padding=padding, dilation=dilation, groups=groups, bias=bias)
         self.leakyRelu = nn.LeakyReLU(0.2, True)
         self.do_norm = do_norm
@@ -64,6 +117,71 @@ class DecoderBlock(nn.Module):
 
         return x
 
+class ResidualLayer(nn.Module):
+    """
+    Residual block used in Johnson's network model:
+    Our residual blocks each contain two 3×3 convolutional layers with the same number of filters on both
+    layer. We use the residual block design of Gross and Wilber [2] (shown in Figure 1), which differs from
+    that of He et al [3] in that the ReLU nonlinearity following the addition is removed; this modified design
+    was found in [2] to perform slightly better for image classification.
+    """
+
+    def __init__(self, channels, kernel_size, final_relu=False, bias=False, do_norm=True, norm='batch'):
+        super().__init__()
+        self.kernel_size = kernel_size
+        self.channels = channels
+        self.padding = (self.kernel_size[0] - 1) // 2
+        self.final_relu = final_relu
+
+        norm_layer, relu_layer = norm_relu_layer(self.channels, do_norm, norm, relu=None)
+        self.layers = nn.Sequential(
+            nn.Conv2d(self.channels, self.channels, self.kernel_size, padding=self.padding, bias=bias),
+            norm_layer,
+            nn.ReLU(),
+            nn.Conv2d(self.channels, self.channels, self.kernel_size, padding=self.padding, bias=bias),
+            norm_layer
+        )
+
+    def forward(self, input):
+        # input (N x channels x H x W)
+        # output (N x channels x H x W)
+        out = self.layers(input)
+        if self.final_relu:
+            return nn.ReLU(out + input)
+        else:
+            return out + input
+
+class GeneratorJohnson(nn.Module):
+    """
+    The Generator architecture in < Perceptual Losses for Real-Time Style Transfer and Super-Resolution >
+    by Justin Johnson, et al.
+    """
+
+    def __init__(self, in_channels=3, out_channels=3, do_norm=True, norm='batch', bias=True):
+        super(GeneratorJohnson, self).__init__()
+        model = []
+        model += [Conv_Norm_ReLU(in_channels, 32, (7, 7), padding=3, stride=1, bias=bias, do_norm=do_norm, norm=norm),
+                  # c7s1-32
+                  Conv_Norm_ReLU(32, 64, (3, 3), padding=1, stride=2, bias=bias, do_norm=do_norm, norm=norm),  # d64
+                  Conv_Norm_ReLU(64, 128, (3, 3), padding=1, stride=2, bias=bias, do_norm=do_norm, norm=norm)]  # d128
+        for i in range(6):
+            model += [ResidualLayer(128, (3, 3), final_relu=False, bias=bias)]  # R128
+        model += [
+            Deconv_Norm_ReLU(128, 64, (3, 3), padding=1, output_padding=1, stride=2, bias=bias, do_norm=do_norm, norm=norm),
+            # u64
+            Deconv_Norm_ReLU(64, 32, (3, 3), padding=1, output_padding=1, stride=2, bias=bias, do_norm=do_norm, norm=norm),
+            # u32
+            nn.Conv2d(32, out_channels, (7, 7), padding=3, stride=1, bias=bias),  # c7s1-3
+            nn.Tanh()]
+        self.model = nn.Sequential(*model)
+
+    def forward(self, input):
+        """
+        :param input: (N x channels x H x W)
+        :return: output: (N x channels x H x W) with numbers of range [-1, 1] (since we use tanh())
+        """
+        return self.model(input)
+
 class Generator(nn.Module):
     def __init__(self, in_channels=3, out_channels=3, bias = False, dropout_prob=0.5, norm = 'batch'):
         super(Generator, self).__init__()
@@ -116,8 +234,6 @@ class Discriminator(nn.Module):
     def __init__(self, in_channels=3, out_channels=1, bias = False, norm = 'batch'):
         super(Discriminator, self).__init__()
 
-        # self.out_channels = out_channels
-
         # 70x70 discriminator
         self.disc1 = EncoderBlock(in_channels * 2, 64, bias=bias, do_norm=False, do_activation=False)
         self.disc2 = EncoderBlock(64, 128, bias=bias, norm=norm)
@@ -161,5 +277,29 @@ class Discriminator286(nn.Module):
         return final
 
 
+class DiscriminatorPatchGAN(nn.Module):
+    """
+    The Discriminator Architecture used in < Image-to-Image Translation with Conditional Adversarial
+    Networks > by Philip Isola, et al.
+    """
+    def __init__(self, in_channels=3, out_channels=1, kernel_size=4, bias=True, do_norm=True, norm='instance', sigmoid=False):
+        super(DiscriminatorPatchGAN, self).__init__()
+        model = []
+        model += [Conv_Norm_ReLU(in_channels*2, 64, kernel_size, padding=1, stride=2, bias=bias, relu=0.2, do_norm=False), # C64
+                  Conv_Norm_ReLU(64, 128, kernel_size, padding=1, stride=2, bias=bias, relu=0.2, do_norm=do_norm, norm=norm), # C128
+                  Conv_Norm_ReLU(128, 256, kernel_size, padding=1, stride=2, bias=bias, relu=0.2, do_norm=do_norm, norm=norm), # C256
+                  Conv_Norm_ReLU(256, 512, kernel_size, padding=1, bias=bias, relu=0.2, do_norm=do_norm, norm=norm), # C512
+                  nn.Conv2d(512, out_channels, kernel_size, padding=1, bias=bias)
+                  ]
+        if sigmoid:
+            model += [nn.Sigmoid()]
+        self.model = nn.Sequential(*model)
 
+    def forward(self, x, ref):
+        """
+        :param input: (N x channels x H x W)
+        :return: output: (N x channels x H/16 x W/16) of discrimination values
+        """
+        input = torch.cat([x, ref],1)
+        return self.model(input)
 
