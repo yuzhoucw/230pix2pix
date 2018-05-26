@@ -113,8 +113,9 @@ class Generator(nn.Module):
         return final
 
 class Discriminator(nn.Module):
-    def __init__(self, in_channels=3, out_channels=1, bias = False, norm = 'batch'):
+    def __init__(self, in_channels=3, out_channels=1, bias = False, norm = 'batch', sigmoid=True):
         super(Discriminator, self).__init__()
+        self.sigmoid = sigmoid
 
         # 70x70 discriminator
         self.disc1 = EncoderBlock(in_channels * 2, 64, bias=bias, do_norm=False, do_activation=False)
@@ -129,14 +130,17 @@ class Discriminator(nn.Module):
         d3 = self.disc3(d2)
         d4 = self.disc4(d3)
         d5 = self.disc5(d4)
-        final = nn.Sigmoid()(d5)
+        if self.sigmoid:
+            final = nn.Sigmoid()(d5)
+        else:
+            final = d5
         return final
 
 class Discriminator286(nn.Module):
-    def __init__(self, in_channels=3, out_channels=1, bias = False, norm = 'batch'):
+    def __init__(self, in_channels=3, out_channels=1, bias = False, norm = 'batch', sigmoid=True):
         super(Discriminator286, self).__init__()
 
-        # self.out_channels = out_channels
+        self.sigmoid = sigmoid
 
         # 286x286 discriminator
         self.disc1 = EncoderBlock(in_channels * 2, 64, bias=bias, do_norm=False, do_activation=False)
@@ -155,7 +159,10 @@ class Discriminator286(nn.Module):
         d5 = self.disc5(d4)
         d6 = self.disc6(d5)
         d7 = self.disc7(d6)
-        final = nn.Sigmoid()(d7)
+        if self.sigmoid:
+            final = nn.Sigmoid()(d7)
+        else:
+            final = d7
         return final
 
 #############################################################

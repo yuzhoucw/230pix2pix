@@ -21,12 +21,13 @@ class GANModel:
         else:
             raise NotImplementedError("Wrong G")
 
+        sigmoid = (args.gan_loss == 'BCE')
         if args.D == 'patch':
-            self.D = Discriminator(bias=args.bias, norm=args.norm)
+            self.D = Discriminator(bias=args.bias, norm=args.norm, sigmoid=sigmoid)
         elif args.D == 'image':
-            self.D = Discriminator286(bias=args.bias, norm=args.norm)
+            self.D = Discriminator286(bias=args.bias, norm=args.norm, sigmoid=sigmoid)
         elif args.D == 'cyc':
-            self.D = DiscriminatorPatchGAN(bias=args.bias, norm=args.norm)
+            self.D = DiscriminatorPatchGAN(bias=args.bias, norm=args.norm, sigmoid=sigmoid)
         else:
             raise NotImplementedError("Wrong D")
 
