@@ -15,7 +15,7 @@ class GANModel:
         if args.G == 'unet':
             self.G = Generator(bias=args.bias, norm=args.norm, dropout_prob=args.dropout)
         elif args.G == 'resnet':
-            raise NotImplementedError("resnet not implemented")
+            self.G = ResGenerator(bias=args.bias, norm=args.norm, dropout_prob=args.dropout)
         elif args.G == 'cyc':
             self.G = GeneratorJohnson(bias=args.bias, norm=args.norm)
         else:

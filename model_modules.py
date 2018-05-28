@@ -166,6 +166,130 @@ class Discriminator286(nn.Module):
         return final
 
 #############################################################
+#ResGenerator
+#############################################################
+class ResEncoderBlock(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size=3, stride=2, padding=1, dilation=1, groups=1, bias=False,
+                 do_norm=True, norm = 'batch', do_activation = True): # bias default is True in Conv2d
+        super(ResEncoderBlock, self).__init__()
+        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, stride=stride, padding=padding, dilation=dilation, groups=groups, bias=bias)
+        self.relu = nn.ReLU()
+        self.do_norm = do_norm
+        self.do_activation = do_activation
+        if do_norm:
+            if norm == 'batch':
+                self.norm = nn.BatchNorm2d(out_channels)
+            elif norm == 'instance':
+                self.norm = nn.InstanceNorm2d(out_channels)
+            elif norm == 'none':
+                self.do_norm = False
+            else:
+                raise NotImplementedError("norm error")
+
+    def forward(self, x):
+
+        x = self.conv(x)
+        if self.do_norm:
+            x = self.norm(x)
+        if self.do_activation:
+            x = self.relu(x)
+
+        return x
+
+class ResDecoderBlock(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size=3, stride=2, padding=1, output_padding=0, bias=False,
+                 do_norm=True, norm = 'batch',do_activation = True, dropout_prob=0.0):
+        super(ResDecoderBlock, self).__init__()
+
+        self.convT = nn.ConvTranspose2d(in_channels, out_channels, kernel_size=kernel_size, stride=stride, padding=padding, output_padding=output_padding, bias=bias)
+        self.relu = nn.ReLU()
+        self.dropout_prob = dropout_prob
+        self.drop = nn.Dropout2d(dropout_prob)
+        self.do_norm = do_norm
+        self.do_activation = do_activation
+        if do_norm:
+            if norm == 'batch':
+                self.norm = nn.BatchNorm2d(out_channels)
+            elif norm == 'instance':
+                self.norm = nn.InstanceNorm2d(out_channels)
+            elif norm == 'none':
+                self.do_norm = False
+            else:
+                raise NotImplementedError("norm error")
+
+    def forward(self, x):
+
+        x = self.convT(x)
+        if self.do_norm:
+           x = self.norm(x)
+        if self.dropout_prob != 0:
+            x= self.drop(x)
+        if self.do_activation:
+            x = self.relu(x)
+        return x
+
+class ResBlock(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size=3, bias=False,
+                 do_norm=True, norm = 'batch', do_activation = True): # bias default is True in Conv2d
+        super(ResBlock, self).__init__()
+        self.padding = (kernel_size - 1) // 2
+        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, padding=self.padding, bias=bias)
+        self.relu = nn.ReLU()
+        # self.do_norm = do_norm
+        # self.do_activation = do_activation
+        if do_norm:
+            if norm == 'batch':
+                self.norm = nn.BatchNorm2d(out_channels)
+            elif norm == 'instance':
+                self.norm = nn.InstanceNorm2d(out_channels)
+            elif norm == 'none':
+                self.do_norm = False
+            else:
+                raise NotImplementedError("norm error")
+
+    def forward(self, x):
+
+        x1 = self.conv(x)
+        x1 = self.norm(x1)
+        x1 = self.relu(x1)
+        x1 = self.conv(x)
+        x1 = self.norm(x1)
+        x1 = self.relu(x + x1)
+
+        return x
+
+class ResGenerator(nn.Module):
+    def __init__(self, in_channels=3, out_channels=3, bias = False, dropout_prob=0.5, norm = 'batch'):
+        super(ResGenerator, self).__init__()
+
+        self.encoder1 = ResEncoderBlock(in_channels, 32, kernel_size=7, padding=3, stride=1, bias=bias, norm=norm)
+        self.encoder2 = ResEncoderBlock(32, 64, kernel_size=3, padding=1, stride=2, bias=bias, norm=norm)
+        self.encoder3 = ResEncoderBlock(64, 128, kernel_size=3, padding=1, stride=2, bias=bias, norm=norm)
+
+        self.reslayer = ResBlock(128, 128, bias=bias, norm=norm)
+
+        self.decoder1 = ResDecoderBlock(128, 64, kernel_size=3, padding=1, output_padding=1, stride=2, bias=bias, norm=norm)
+        self.decoder2 = ResDecoderBlock(64, 32, kernel_size=3, padding=1, output_padding=1, stride=2, bias=bias, norm=norm)
+        self.decoder3 = ResEncoderBlock(32, out_channels, kernel_size=7, padding=3, stride=1, bias=bias, do_norm=False, do_activation=False)
+
+    def forward(self, x):
+
+        x = self.encoder1(x)
+        x = self.encoder2(x)
+        x = self.encoder3(x)
+        for i in range(6):
+            x = self.reslayer(x)
+        x = self.decoder1(x)
+        x = self.decoder2(x)
+        x = self.decoder3(x)
+        final = nn.Tanh()(x)
+        return final
+
+
+#############################################################
+#ResGenerator YILONG
+#############################################################
+
 
 def norm_relu_layer(out_channel, do_norm, norm, relu):
     if do_norm:
