@@ -131,30 +131,31 @@ class GANModel:
         # self.G.eval()
         # self.D.eval()
 
-        x, y = input
-        gen = self.G(x)
+        with torch.no_grad():
+            x, y = input
+            gen = self.G(x)
 
-        # self.save_image((x, gen, y), 'datasets/maps/samples', '2018')
+            # self.save_image((x, gen, y), 'datasets/maps/samples', '2018')
 
-        ############################
-        # D loss
-        ############################
-        # real y and x -> 1
-        loss_D_real = self.gan_loss(self.D(y, x), 1) * self.lambd_d
-        # gen and x -> 0
-        loss_D_fake = self.gan_loss(self.D(gen, x), 0) * self.lambd_d
-        # Combine
-        loss_D = loss_D_real + loss_D_fake
+            ############################
+            # D loss
+            ############################
+            # real y and x -> 1
+            loss_D_real = self.gan_loss(self.D(y, x), 1) * self.lambd_d
+            # gen and x -> 0
+            loss_D_fake = self.gan_loss(self.D(gen, x), 0) * self.lambd_d
+            # Combine
+            loss_D = loss_D_real + loss_D_fake
 
-        ############################
-        # G loss
-        ############################
-        # GAN loss of G
-        loss_G_gan = self.gan_loss(self.D(gen, x), 1)
-        # L1 loss of G
-        loss_G_L1 = self.L1_loss_fn(gen, y) * self.lambd
-        # Combine
-        loss_G = loss_G_gan + loss_G_L1
+            ############################
+            # G loss
+            ############################
+            # GAN loss of G
+            loss_G_gan = self.gan_loss(self.D(gen, x), 1)
+            # L1 loss of G
+            loss_G_L1 = self.L1_loss_fn(gen, y) * self.lambd
+            # Combine
+            loss_G = loss_G_gan + loss_G_L1
 
         # save image
         if save:
