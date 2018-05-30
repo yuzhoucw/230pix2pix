@@ -84,7 +84,7 @@ class GANModel:
         # self.G.train()
         # self.D.train()
 
-        x, y = input
+        x, y, img_idx = input
 
         ############################
         # D loss
@@ -122,7 +122,7 @@ class GANModel:
 
         # save image
         if save:
-            self.save_image((x, y, gen), out_dir_img, "train_ep_%d" % epoch)
+            self.save_image((x, y, gen), out_dir_img, "train_ep_%d_img_%d" % (epoch, img_idx))
 
         return {'G': loss_G, 'G_gan': loss_G_gan, 'G_L1': loss_G_L1,
                 'D': loss_D, 'D_real': loss_D_real, 'D_fake': loss_D_fake}
@@ -132,7 +132,7 @@ class GANModel:
         # self.D.eval()
 
         with torch.no_grad():
-            x, y = input
+            x, y, img_idx = input
             gen = self.G(x)
 
             # self.save_image((x, gen, y), 'datasets/maps/samples', '2018')
@@ -159,14 +159,14 @@ class GANModel:
 
         # save image
         if save:
-            self.save_image((x, y, gen), out_dir_img, "val_ep_%d" % epoch)
+            self.save_image((x, y, gen), out_dir_img, "val_ep_%d_img_%d" % (epoch, img_idx))
 
         return {'G': loss_G, 'G_gan': loss_G_gan, 'G_L1': loss_G_L1,
                 'D': loss_D, 'D_real': loss_D_real, 'D_fake': loss_D_fake}
 
     def test(self, images, i, out_dir_img):
-        A, B = images
-        self.save_image((A, B, self.G(A)), out_dir_img, "test_%d" % i)
+        A, B, img_idx = images
+        self.save_image((A, B, self.G(A)), out_dir_img, "test_%d" % img_idx, test=True)
 
 
     def gan_loss(self, out, label):
@@ -196,16 +196,19 @@ class GANModel:
                 'optimG': self.optimizer_G.state_dict(),
                 'optimD': self.optimizer_D.state_dict()}
 
-    def save_image(self, input, filepath, fname):
+    def save_image(self, input, filepath, fname, test=False):
         """ input is a tuple of the images we want to compare """
         A, B, gen = input
 
-        # img_A, img_B, img_gen = self.tensor2image(A), self.tensor2image(B), self.tensor2image(gen)
+        if test:
+            img = self.tensor2image(gen)
+            path = os.path.join(filepath, '%s.png' % fname)
+            scipy.misc.imsave(path, img.squeeze().transpose(1,2,0))
+        else:
+            merged = self.tensor2image(self.merge_images(A, B, gen))
+            path = os.path.join(filepath, '%s.png' % fname)
+            scipy.misc.imsave(path, merged)
 
-        # merged = self.merge_images(img_A, img_B, img_gen)
-        merged = self.tensor2image(self.merge_images(A, B, gen))
-        path = os.path.join(filepath, '%s.png' % fname)
-        scipy.misc.imsave(path, merged)
         print('saved %s' % path)
 
     def tensor2image(self, input):

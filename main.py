@@ -83,10 +83,12 @@ if __name__ == "__main__":
         train_loader = dataloader.get_dataloader(os.path.join(args.data_dir, "trainA"),
                                                  os.path.join(args.data_dir, "trainB"),
                                                  resize=args.resize, crop=args.crop,
+                                                 shuffle=True, test=False,
                                                  batch_size=args.batch_size, unaligned=args.unaligned, device=device)
         val_loader = dataloader.get_dataloader(os.path.join(args.data_dir, "valA"),
                                                os.path.join(args.data_dir, "valB"),
                                                resize=args.resize, crop=args.crop,
+                                               shuffle=True, test=True,
                                                batch_size=1, unaligned=args.unaligned, device=device) #TODO val batch size
     if args.mode == "test":
         out_dir = os.path.dirname(args.pretrain_path)
@@ -97,6 +99,7 @@ if __name__ == "__main__":
         test_loader = dataloader.get_dataloader(os.path.join(args.data_dir, "testA"),
                                                 os.path.join(args.data_dir, "testB"),
                                                 resize=args.resize, crop=args.crop,
+                                                shuffle=False, test=True,
                                                 batch_size=1, unaligned=args.unaligned, device=device)
 
     if args.vis:
