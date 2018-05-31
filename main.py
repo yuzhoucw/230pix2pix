@@ -26,6 +26,7 @@ parser.add_argument('--print_every_val', default=200, type=int)
 parser.add_argument('--save_every_epoch', default=20, type=int)
 parser.add_argument('--eval_n', default=100, type=int, help='number of examples from val set to evaluate on each epoch')
 parser.add_argument('--save_n_img', default=5, type=int, help='number of images to save at test time')
+parser.add_argument('--suffix', default='', type=str, help='out dir suffix')
 # Optimization
 parser.add_argument('--lr', default=0.0002, type=float)
 parser.add_argument('--lr_decay_start', default=100, type=int, help='eppch to start lr decay')
@@ -68,7 +69,8 @@ if __name__ == "__main__":
         os.mkdir(args.out_dir)
 
     if args.mode == "train":
-        out_dir = os.path.join(args.out_dir, time.strftime("%m%d%H%M%S"))
+        out_dir = os.path.join(args.out_dir, "%s%s" % (time.strftime("%m%d%H%M%S"),
+                                                       "_" + args.suffix if len(args.suffix) != 0 else ""))
         os.mkdir(out_dir)
         out_dir_img = os.path.join(out_dir, "images")
         os.mkdir(out_dir_img)
