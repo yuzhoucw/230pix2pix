@@ -43,6 +43,7 @@ parser.add_argument('--beta1', default=0.5, type=float, help='momentum term of a
 parser.add_argument('--lambd', default=100.0, type=float, help='weight for L1 loss')
 parser.add_argument('--lambd_d', default=0.5, type=float, help='D loss scale')
 parser.add_argument('--d_update_frequency', default=1, type=int, help='discriminator parameter update frequency')
+parser.add_argument('--init_type', default='normal', type=str, help='initialization for weights for G and D. normal|xavier|kaiming')
 # Files
 parser.add_argument('--out_dir', default='./checkpoints', type=str)
 parser.add_argument('--data_dir', default='./datasets/maps/', type=str)

@@ -4,6 +4,7 @@ import numpy as np
 import scipy.misc
 import os
 import itertools
+from torch.nn import init
 
 class GANModel:
 
@@ -31,6 +32,11 @@ class GANModel:
         else:
             raise NotImplementedError("Wrong D")
 
+        self.init_type = args.init_type
+        if args.init_type is not None:
+            self.G.apply(self.init_weights)
+            self.D.apply(self.init_weights)
+
         self.optimizer_G = torch.optim.Adam(self.G.parameters(),
                                             lr=args.lr, betas=(args.beta1, 0.999))
         self.optimizer_D = torch.optim.Adam(self.D.parameters(),
@@ -55,6 +61,21 @@ class GANModel:
 
     def lr_lambda(self, epoch):
         return 1.0 - max(0, epoch + self.start_epoch - self.args.lr_decay_start) / (self.args.lr_decay_n + 1)
+
+    def init_weights(self, m):
+        classname = m.__class__.__name__
+        if hasattr(m, 'weight') and (classname.find('Conv') != -1 or classname.find('Linear') != -1):
+            if self.init_type == 'normal':
+                init.normal_(m.weight.data, 0.0, 0.02)
+            elif self.init_type == 'xavier':
+                init.xavier_normal_(m.weight.data, gain=0.02)
+            elif self.init_type == 'kaiming':
+                init.kaiming_normal_(m.weight.data, a=0, mode='fan_in')
+            else:
+                raise NotImplementedError('initialization method [%s] not implemented' % self.init_type)
+        elif classname.find('BatchNorm2d') != -1:
+            init.normal_(m.weight.data, 1.0, 0.02)
+            init.constant_(m.bias.data, 0.0)
 
     def update_scheduler(self):
         self.scheduler_G.step()
