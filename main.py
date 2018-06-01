@@ -25,7 +25,7 @@ parser.add_argument('--print_every_train', default=100, type=int)
 parser.add_argument('--print_every_val', default=200, type=int)
 parser.add_argument('--save_every_epoch', default=20, type=int)
 parser.add_argument('--eval_n', default=100, type=int, help='number of examples from val set to evaluate on each epoch')
-parser.add_argument('--save_n_img', default=5, type=int, help='number of images to save at test time')
+parser.add_argument('--save_n_img', default=10000, type=int, help='number of images to save at test time')
 parser.add_argument('--suffix', default='', type=str, help='out dir suffix')
 # Optimization
 parser.add_argument('--lr', default=0.0002, type=float)
