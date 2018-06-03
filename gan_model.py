@@ -19,6 +19,8 @@ class GANModel:
             self.G = ResGenerator(bias=args.bias, norm=args.norm, dropout_prob=args.dropout)
         elif args.G == 'cyc':
             self.G = GeneratorJohnson(bias=args.bias, norm=args.norm)
+        elif args.G == 'cyc9':
+            self.G = GeneratorJohnson2()
         else:
             raise NotImplementedError("Wrong G")
 

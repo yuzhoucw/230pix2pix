@@ -437,3 +437,75 @@ class DiscriminatorPatchGAN(nn.Module):
         input = torch.cat([x, ref],1)
         return self.model(input)
 
+#################################
+# res9
+#################################
+class ResidualBlock2(nn.Module):
+    def __init__(self, in_features, norm_layer=nn.InstanceNorm2d):
+        super(ResidualBlock2, self).__init__()
+
+        conv_block = [nn.ReflectionPad2d(1),
+                      nn.Conv2d(in_features, in_features, 3),
+                      norm_layer(in_features),
+                      nn.ReLU(inplace=True),
+                      nn.ReflectionPad2d(1),
+                      nn.Conv2d(in_features, in_features, 3),
+                      norm_layer(in_features)]
+
+        self.conv_block = nn.Sequential(*conv_block)
+
+    def forward(self, x):
+        return x + self.conv_block(x)
+
+
+class GeneratorJohnson2(nn.Module):
+    """
+    Generator with 9 residual blocks and reflection padding.
+    """
+
+    def __init__(self, image_channel=3, norm='instancenorm', n_res_blocks=9):
+        super(GeneratorJohnson2, self).__init__()
+        if norm == 'batchnorm':
+            norm_layer = nn.BatchNorm2d
+        elif norm == 'instancenorm':
+            norm_layer = nn.InstanceNorm2d
+        else:
+            raise Exception("Norm not specified!")
+
+        # Downsample
+        model = [nn.ReflectionPad2d(3),
+                 nn.Conv2d(image_channel, 64, 7),
+                 norm_layer(64),
+                 nn.ReLU(inplace=True)]
+
+        in_channels = 64
+        out_channels = in_channels * 2
+        for i in range(2):
+            model += [nn.Conv2d(in_channels, out_channels, 3, stride=2, padding=1),
+                      norm_layer(out_channels),
+                      nn.ReLU(inplace=True)]
+            in_channels = out_channels
+            out_channels = in_channels * 2
+
+        # Residual blocks
+        for i in range(n_res_blocks):
+            model += [ResidualBlock2(in_channels, norm_layer=norm_layer)]
+
+        # Upsample
+        out_channels = in_channels // 2
+        for i in range(2):
+            model += [nn.ConvTranspose2d(in_channels, out_channels, 3, stride=2, padding=1, output_padding=1),
+                      norm_layer(out_channels),
+                      nn.ReLU(inplace=True)]
+            in_channels = out_channels
+            out_channels = in_channels // 2
+
+        model += [nn.ReflectionPad2d(3),
+                  nn.Conv2d(64, 3, 7),
+                  nn.Tanh()]
+
+        self.model = nn.Sequential(*model)
+
+
+    def forward(self, input):
+        return self.model(input)
