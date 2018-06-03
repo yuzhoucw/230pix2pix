@@ -265,10 +265,21 @@ if __name__ == "__main__":
 
     if args.mode == "test":
         print("\nEvaluating on test set...")
+        scores_gen = []
+        scores_gt = []
         for i, images in enumerate(test_loader):
             if i >= args.save_n_img:
                 break
             model.test(images, i, out_dir_img)
+
+            score_gen, score_gt = model.test(images, i, out_dir_img)
+            score_gen = round(float(score_gen), 6)
+            score_gt = round(float(score_gt), 6)
+            scores_gen.append(score_gen)
+            scores_gt.append(score_gt)
+
+            with open(os.path.join(out_dir, "d_scores.json"), "w") as f:
+                json.dump({"scores_gen": scores_gen, "scores_gt": scores_gt}, f)
 
         # test_loss = {}
         # for i, images in enumerate(test_loader):

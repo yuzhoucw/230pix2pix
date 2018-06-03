@@ -188,8 +188,13 @@ class GANModel:
                 'D': loss_D, 'D_real': loss_D_real, 'D_fake': loss_D_fake}
 
     def test(self, images, i, out_dir_img):
-        A, B, img_idx = images
-        self.save_image((A, B, self.G(A)), out_dir_img, "test_%d" % img_idx, test=True)
+        with torch.no_grad():
+            A, B, img_idx = images
+            gen = self.G(A)
+            score_gen = self.D(gen, A).mean()
+            score_gt = self.D(B, A).mean()
+            self.save_image((A, B, gen), out_dir_img, "test_%d" % img_idx, test=True)
+        return score_gen, score_gt
 
 
     def gan_loss(self, out, label):
