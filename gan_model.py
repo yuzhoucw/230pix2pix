@@ -21,6 +21,8 @@ class GANModel:
             self.G = GeneratorJohnson(bias=args.bias, norm=args.norm)
         elif args.G == 'cyc9':
             self.G = GeneratorJohnson2()
+        elif args.G == 'resnet50':
+            self.G = Resnet50()
         else:
             raise NotImplementedError("Wrong G")
 
