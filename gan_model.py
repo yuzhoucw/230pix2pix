@@ -193,7 +193,7 @@ class GANModel:
             gen = self.G(A)
             score_gen = self.D(gen, A).mean()
             score_gt = self.D(B, A).mean()
-            self.save_image((A, B, gen), out_dir_img, "test_%d" % img_idx, test=True)
+            # self.save_image((A, B, gen), out_dir_img, "test_%d" % img_idx, test=True)
         return score_gen, score_gt
 
 
