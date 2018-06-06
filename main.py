@@ -96,11 +96,17 @@ if __name__ == "__main__":
     if args.mode == "test":
         out_dir = os.path.dirname(args.pretrain_path)
         out_dir_img = os.path.join(out_dir, "images", "test")
-        os.mkdir(out_dir_img)
+        # os.mkdir(out_dir_img)
 
         # load data
-        test_loader = dataloader.get_dataloader(os.path.join(args.data_dir, "testA"),
-                                                os.path.join(args.data_dir, "testB"),
+        # test_loader = dataloader.get_dataloader(os.path.join(args.data_dir, "testA"),
+        #                                         os.path.join(args.data_dir, "testB"),
+        #                                         resize=args.resize, crop=args.crop,
+        #                                         shuffle=False, test=True,
+        #                                         batch_size=1, unaligned=args.unaligned, device=device)
+
+        test_loader = dataloader.get_dataloader(os.path.join(args.data_dir, "trainA"),
+                                                os.path.join(args.data_dir, "trainB"),
                                                 resize=args.resize, crop=args.crop,
                                                 shuffle=False, test=True,
                                                 batch_size=1, unaligned=args.unaligned, device=device)
