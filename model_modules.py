@@ -529,7 +529,7 @@ class Resnet50(nn.Module):
         model = []
         # Downsample, 256 -> 128 -> 64 -> 32 -> 16 -> 8, throw out last 4 layers from batch norm to FC
         res_original = models.resnet50(pretrained=False)
-        model += list(res_original.modules())[:-2]
+        model += list(res_original.children())[:-2]
 
         # Upsample
         in_channels = 2048
