@@ -286,7 +286,7 @@ if __name__ == "__main__":
             scores_gen.append(score_gen)
             scores_gt.append(score_gt)
 
-            with open(os.path.join(out_dir, "d_scores.json"), "w") as f:
+            with open(os.path.join(out_dir, "d_scores_%s.json" % args.d_score), "w") as f:
                 json.dump({"scores_gen": scores_gen, "scores_gt": scores_gt}, f)
 
         # test_loss = {}
