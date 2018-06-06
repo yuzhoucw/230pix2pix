@@ -27,6 +27,7 @@ parser.add_argument('--save_every_epoch', default=20, type=int)
 parser.add_argument('--eval_n', default=100, type=int, help='number of examples from val set to evaluate on each epoch')
 parser.add_argument('--save_n_img', default=10000, type=int, help='number of images to save at test time')
 parser.add_argument('--suffix', default='', type=str, help='out dir suffix')
+parser.add_argument('--d_score', default='train', type=str, help='train|test. compute d score on train set or test set.')
 # Optimization
 parser.add_argument('--lr', default=0.0002, type=float)
 parser.add_argument('--lr_decay_start', default=100, type=int, help='eppch to start lr decay')
@@ -99,17 +100,18 @@ if __name__ == "__main__":
         # os.mkdir(out_dir_img)
 
         # load data
-        # test_loader = dataloader.get_dataloader(os.path.join(args.data_dir, "testA"),
-        #                                         os.path.join(args.data_dir, "testB"),
-        #                                         resize=args.resize, crop=args.crop,
-        #                                         shuffle=False, test=True,
-        #                                         batch_size=1, unaligned=args.unaligned, device=device)
-
-        test_loader = dataloader.get_dataloader(os.path.join(args.data_dir, "trainA"),
-                                                os.path.join(args.data_dir, "trainB"),
-                                                resize=args.resize, crop=args.crop,
-                                                shuffle=False, test=True,
-                                                batch_size=1, unaligned=args.unaligned, device=device)
+        if args.d_score == "test":
+            test_loader = dataloader.get_dataloader(os.path.join(args.data_dir, "testA"),
+                                                    os.path.join(args.data_dir, "testB"),
+                                                    resize=args.resize, crop=args.crop,
+                                                    shuffle=False, test=True,
+                                                    batch_size=1, unaligned=args.unaligned, device=device)
+        elif args.d_score == "train":
+            test_loader = dataloader.get_dataloader(os.path.join(args.data_dir, "trainA"),
+                                                    os.path.join(args.data_dir, "trainB"),
+                                                    resize=args.resize, crop=args.crop,
+                                                    shuffle=False, test=True,
+                                                    batch_size=1, unaligned=args.unaligned, device=device)
 
     if args.vis:
         if args.port:
