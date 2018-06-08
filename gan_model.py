@@ -23,6 +23,8 @@ class GANModel:
             self.G = GeneratorJohnson2()
         elif args.G == 'resnet50':
             self.G = Resnet50()
+        elif args.G == 'resnet101':
+            self.G = Resnet101()
         else:
             raise NotImplementedError("Wrong G")
 

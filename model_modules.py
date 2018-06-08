@@ -550,3 +550,42 @@ class Resnet50(nn.Module):
 
     def forward(self, input):
         return self.model(input)
+
+class Resnet101(nn.Module):
+    """
+    Generator with 9 residual blocks and reflection padding.
+    """
+
+    def __init__(self, image_channel=3, norm='batchnorm'):
+        super(Resnet101, self).__init__()
+        if norm == 'batchnorm':
+            norm_layer = nn.BatchNorm2d
+        elif norm == 'instancenorm':
+            norm_layer = nn.InstanceNorm2d
+        else:
+            raise Exception("Norm not specified!")
+
+        model = []
+        # Downsample, 256 -> 128 -> 64 -> 32 -> 16 -> 8, throw out last 4 layers from batch norm to FC
+        res_original = models.resnet101(pretrained=False)
+        model += list(res_original.children())[:-2]
+
+        # Upsample
+        in_channels = 2048
+        out_channels = in_channels // 2
+        for i in range(5):
+            model += [nn.ConvTranspose2d(in_channels, out_channels, 3, stride=2, padding=1, output_padding=1),
+                      norm_layer(out_channels),
+                      nn.ReLU(inplace=True)]
+            in_channels = out_channels
+            out_channels = in_channels // 2
+
+        model += [nn.ReflectionPad2d(3),
+                  nn.Conv2d(64, image_channel, 7),
+                  nn.Tanh()]
+
+        self.model = nn.Sequential(*model)
+
+
+    def forward(self, input):
+        return self.model(input)
