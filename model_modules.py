@@ -517,7 +517,7 @@ class Resnet50(nn.Module):
     Generator with 9 residual blocks and reflection padding.
     """
 
-    def __init__(self, image_channel=3, norm='batchnorm'):
+    def __init__(self, image_channel=3, norm='instancenorm'):
         super(Resnet50, self).__init__()
         if norm == 'batchnorm':
             norm_layer = nn.BatchNorm2d
