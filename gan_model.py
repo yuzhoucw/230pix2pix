@@ -15,11 +15,9 @@ class GANModel:
         # Code (paper): G_A (G), G_B (F), D_A (D_Y), D_B (D_X)
         if args.G == 'unet':
             self.G = Generator(bias=args.bias, norm=args.norm, dropout_prob=args.dropout)
-        elif args.G == 'resnet':
-            self.G = ResGenerator(bias=args.bias, norm=args.norm, dropout_prob=args.dropout)
-        elif args.G == 'cyc':
+        elif args.G == 'resnet6':
             self.G = GeneratorJohnson(bias=args.bias, norm=args.norm)
-        elif args.G == 'cyc9':
+        elif args.G == 'resnet9':
             self.G = GeneratorJohnson2()
         elif args.G == 'resnet50':
             self.G = Resnet50()
@@ -33,8 +31,6 @@ class GANModel:
             self.D = Discriminator(bias=args.bias, norm=args.norm, sigmoid=sigmoid)
         elif args.D == 'image':
             self.D = Discriminator286(bias=args.bias, norm=args.norm, sigmoid=sigmoid)
-        elif args.D == 'cyc':
-            self.D = DiscriminatorPatchGAN(bias=args.bias, norm=args.norm, sigmoid=sigmoid)
         else:
             raise NotImplementedError("Wrong D")
 
