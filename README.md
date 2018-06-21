@@ -1,5 +1,5 @@
 # Pix2pix in Pytorch
-This project is based on [Image-to-Image Translation with Conditional Adversarial Networks] (https://arxiv.org/pdf/1611.07004v1.pdf).
+This project is based on [Image-to-Image Translation with Conditional Adversarial Networks](https://arxiv.org/pdf/1611.07004v1.pdf).
 
 ![Generated images](https://github.com/yuzhoucw/230pix2pix/blob/master/imgs/generated.png)
 
@@ -10,17 +10,18 @@ This project is based on [Image-to-Image Translation with Conditional Adversaria
 
 
 ## Dataset
-Maps dataset can be downloaded from original project [CycleGAN and pix2pix in PyTorch] (https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix).
+Maps dataset can be downloaded from original project [CycleGAN and pix2pix in PyTorch](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix).
 Should choose the CycleGAN one in the format of
-.
-├── datasets
-|   ├── maps
-|   |   ├── trainA             # Training
-|   |   ├── trainB
-|   |   ├── valA               # Validation
-|   |   ├── valB
-|   |   ├── testA              # Test
-|   |   ├── testB
+
+    .
+    ├── datasets
+    |   ├── maps
+    |   |   ├── trainA             # Training
+    |   |   ├── trainB
+    |   |   ├── valA               # Validation
+    |   |   ├── valB
+    |   |   ├── testA              # Test
+    |   |   ├── testB
 
 
 ## Training
@@ -58,5 +59,8 @@ python main.py --mode test --pretrain_path ./checkpoints/xxx/xxx.pt
 This generates all images from test set and save them to ./checkpoints/xxx/images/test/.
 
 
-![MSE](https://github.com/yuzhoucw/230pix2pix/blob/master/imgs/mse.png)
-![tsne](https://github.com/yuzhoucw/230pix2pix/blob/master/imgs/tsne.png)
+Mean Squared Error of generated images:
+<img src='imgs/mse.png' width="600px"/>
+
+t-SNE plot of 5 random generated images from different models and ground truth:
+<img src='imgs/tsne.png' width="600px"/>
