@@ -33,7 +33,7 @@ python main.py --mode train --data_dir [data_directory] --n_epoch 200 --G cyc --
 ```
 Default is "./datasets/maps/". Source (A) and target (B) images should be in folders trainA/trainB, valA/valB, testA/testB separately.
 
-### Train using pretrained model
+### Continue train using pretrained model
 ```bash
 python main.py --mode train --pretrain_path ./checkpoints/xxx/xxx.pt
 ```
@@ -60,7 +60,7 @@ This generates all images from test set and save them to ./checkpoints/xxx/image
 
 
 Mean Squared Error of generated images:
-<img src='imgs/mse.png' width="600px"/>
+<img src='imgs/mse.png' width="300px"/>
 
 t-SNE plot of 5 random generated images from different models and ground truth:
 <img src='imgs/tsne.png' width="600px"/>
