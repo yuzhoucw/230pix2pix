@@ -29,7 +29,7 @@ Should choose the CycleGAN one in the format of
 ### Train model from scratch
 
 ```bash
-python main.py --mode train --data_dir [data_directory] --n_epoch 200 --G cyc --D cyc --gan_loss MSE
+python main.py --mode train --data_dir [data_directory] --n_epoch 200 --G resnet9 --gan_loss MSE
 ```
 Default ```data_dir``` is ```./datasets/maps/```. Source (A) and target (B) images should be in folders trainA/trainB, valA/valB, testA/testB separately.
 
