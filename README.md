@@ -60,7 +60,7 @@ This generates all images from test set and save them to ./checkpoints/xxx/image
 
 
 Mean Squared Error of generated images:
-<br/>
+<br/><br/>
 <img src='imgs/mse.png' width="300px"/>
 
 t-SNE plot of 5 random generated images from different models and ground truth:
