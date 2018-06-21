@@ -1,7 +1,7 @@
 # Pix2pix in Pytorch
 This project is based on [Image-to-Image Translation with Conditional Adversarial Networks](https://arxiv.org/pdf/1611.07004v1.pdf).
 
-![Generated images](https://github.com/yuzhoucw/230pix2pix/blob/master/imgs/generated.png)
+<img src='imgs/generated.png'/>
 
 
 ## Prerequisites
@@ -39,13 +39,14 @@ python main.py --mode train --pretrain_path ./checkpoints/xxx/xxx.pt
 ```
 Need to provide same configs/options when continue to train a model.
 
-### Plot stats from train.json
+### Plot loss stats from train.json
 ```bash
 python plot.py --dir ./checkpoints/xxx
 ```
 It will look for train.json in the directory and output plots as result.png.
 
-![Loss](https://github.com/yuzhoucw/230pix2pix/blob/master/imgs/loss.png)
+Loss:
+<img src='imgs/loss.png'/>
 
 ### See more options available
 ```bash
