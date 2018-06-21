@@ -1,7 +1,7 @@
 # Pix2pix in Pytorch
 This project is based on [Image-to-Image Translation with Conditional Adversarial Networks] (https://arxiv.org/pdf/1611.07004v1.pdf).
 
-![Generated images](https://github.com/yuzhoucw/230pix2pix)
+![Generated images](https://github.com/yuzhoucw/230pix2pix/blob/master/imgs/generated.png)
 
 
 ## Prerequisites
@@ -12,14 +12,15 @@ This project is based on [Image-to-Image Translation with Conditional Adversaria
 ## Dataset
 Maps dataset can be downloaded from original project [CycleGAN and pix2pix in PyTorch] (https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix).
 Should choose the CycleGAN one in the format of
+.
 ├── datasets
-    |   ├── maps
-    |   |   ├── trainA             # Training
-    |   |   ├── trainB
-    |   |   ├── valA               # Validation
-    |   |   ├── valB
-    |   |   ├── testA              # Test
-    |   |   ├── testB
+|   ├── maps
+|   |   ├── trainA             # Training
+|   |   ├── trainB
+|   |   ├── valA               # Validation
+|   |   ├── valB
+|   |   ├── testA              # Test
+|   |   ├── testB
 
 
 ## Training
@@ -43,6 +44,8 @@ python plot.py --dir ./checkpoints/xxx
 ```
 It will look for train.json in the directory and output plots as result.png.
 
+![Loss](https://github.com/yuzhoucw/230pix2pix/blob/master/imgs/loss.png)
+
 ### See more options available
 ```bash
 python main.py -h
@@ -54,3 +57,6 @@ python main.py --mode test --pretrain_path ./checkpoints/xxx/xxx.pt
 ```
 This generates all images from test set and save them to ./checkpoints/xxx/images/test/.
 
+
+![MSE](https://github.com/yuzhoucw/230pix2pix/blob/master/imgs/mse.png)
+![tsne](https://github.com/yuzhoucw/230pix2pix/blob/master/imgs/tsne.png)
